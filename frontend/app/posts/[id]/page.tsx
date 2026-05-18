@@ -87,7 +87,7 @@ export default async function PostDetail({
           {post.image && (
             <div className="mt-8 overflow-hidden rounded-2xl border border-zinc-200/70">
               <img
-                src={`http://localhost:8000/uploads/${post.image}`}
+                src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/uploads/${post.image}`}
                 alt={post.title}
                 className="w-full h-auto object-cover"
               />
