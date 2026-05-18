@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: journal-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PORT=8000
+      - GIN_MODE=release
+    volumes:
+      - backend-uploads:/root/uploads
+    networks:
+      - journal-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: journal-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - API_URL_SERVER=http://backend:8000  
+    depends_on:
+      - backend
+    networks:
+      - journal-network
+    restart: unless-stopped
+
+volumes:
+  backend-uploads:
+
+networks:
+  journal-network:
+    driver: bridge

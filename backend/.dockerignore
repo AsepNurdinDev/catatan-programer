@@ -1,0 +1,20 @@
+# Mengabaikan binary hasil build lokal (jika ada)
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Mengabaikan log dan env lokal
+.env
+*.log
+
+# Mengabaikan folder git dan konfigurasi editor
+.git
+.gitignore
+.vscode
+.idea
+
+# Mengabaikan cache internal go
+.gitconfig
