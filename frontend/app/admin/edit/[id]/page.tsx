@@ -17,7 +17,6 @@ export default function EditPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
 
-  // State untuk manajemen Pop-up Alert
   const [alertConfig, setAlertConfig] = useState<{
     show: boolean;
     type: "success" | "error";
@@ -28,12 +27,10 @@ export default function EditPage() {
     message: "",
   })
 
-  // Fungsi pembantu untuk memicu alert
   const triggerAlert = (type: "success" | "error", message: string) => {
     setAlertConfig({ show: true, type, message })
   }
 
-  // Fungsi untuk menutup alert sukses dan redirect
   const handleAlertClose = () => {
     setAlertConfig(prev => ({ ...prev, show: false }))
     if (alertConfig.type === "success") {
@@ -41,8 +38,14 @@ export default function EditPage() {
     }
   }
 
-  // fetch old data
   useEffect(() => {
+    // ✅ FIX 1: Cek token dulu
+    const token = localStorage.getItem("admin_token")
+    if (!token) {
+      router.push("/login")
+      return
+    }
+
     if (!id) return
 
     async function fetchPostData() {
@@ -54,9 +57,11 @@ export default function EditPage() {
           setTitle(post.title)
           setContent(post.content)
 
-          // old image preview
           if (post.image) {
-            setPreviewImage(`http://localhost:8000/uploads/${post.image}`)
+            // ✅ FIX 2: Pakai env variable bukan hardcode localhost
+            setPreviewImage(
+              `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/uploads/${post.image}`
+            )
           }
         }
       } catch (error) {
@@ -87,10 +92,11 @@ export default function EditPage() {
         image: image || undefined,
       })
 
-      console.log(response)
-
-      // Trigger Alert ketika berhasil memperbarui artikel
-      triggerAlert("success", "Perubahan artikel berhasil disimpan!")
+      if (response.success) {
+        triggerAlert("success", "Perubahan artikel berhasil disimpan!")
+      } else {
+        triggerAlert("error", response.message || "Gagal memperbarui artikel.")
+      }
     } catch (error) {
       console.error("Gagal memperbarui artikel:", error)
       triggerAlert("error", "Gagal memperbarui artikel. Silakan coba lagi.")
@@ -99,7 +105,6 @@ export default function EditPage() {
     }
   }
 
-  // loading screen
   if (isFetching) {
     return (
       <div className="min-h-screen bg-zinc-50/30 flex items-center justify-center font-sans">
@@ -113,12 +118,9 @@ export default function EditPage() {
   return (
     <div className="relative min-h-screen bg-zinc-50/30 text-zinc-900 antialiased py-12 px-6">
       
-      {/* POP-UP MODAL ALERT */}
       {alertConfig.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full border border-zinc-100 shadow-xl text-center transform scale-100 transition-all">
-            
-            {/* Icon Alert */}
             <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
               alertConfig.type === "success" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
             }`}>
@@ -133,7 +135,6 @@ export default function EditPage() {
               )}
             </div>
 
-            {/* Judul & Pesan */}
             <h3 className="text-lg font-medium text-zinc-900">
               {alertConfig.type === "success" ? "Berhasil!" : "Perhatian"}
             </h3>
@@ -141,7 +142,6 @@ export default function EditPage() {
               {alertConfig.message}
             </p>
 
-            {/* Tombol Aksi */}
             <button
               onClick={handleAlertClose}
               className={`mt-6 w-full inline-flex justify-center text-sm font-medium px-4 py-2.5 rounded-xl transition-colors duration-200 text-white ${
@@ -156,10 +156,7 @@ export default function EditPage() {
         </div>
       )}
 
-      {/* Konten Utama */}
       <div className="max-w-2xl mx-auto bg-white border border-zinc-200/60 rounded-2xl p-6 sm:p-10 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)]">
-        
-        {/* Header */}
         <div className="mb-8 pb-4 border-b border-zinc-100">
           <h1 className="text-2xl font-serif font-medium text-zinc-900 sm:text-3xl">
             Edit Artikel
@@ -169,10 +166,7 @@ export default function EditPage() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {/* Title */}
           <div className="space-y-2">
             <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
               Judul Artikel
@@ -187,7 +181,6 @@ export default function EditPage() {
             />
           </div>
 
-          {/* Content */}
           <div className="space-y-2">
             <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
               Konten / Isi Artikel
@@ -201,7 +194,6 @@ export default function EditPage() {
             />
           </div>
 
-          {/* Upload Image */}
           <div className="space-y-2">
             <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
               Gambar Artikel
@@ -219,7 +211,6 @@ export default function EditPage() {
               className="w-full bg-zinc-50/50 border border-zinc-200 focus:border-zinc-400 focus:bg-white p-3 rounded-xl text-sm font-sans outline-none transition-all"
             />
 
-            {/* Preview */}
             {previewImage && (
               <img
                 src={previewImage}
@@ -229,9 +220,7 @@ export default function EditPage() {
             )}
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-zinc-100">
-            {/* Back */}
             <Link
               href="/admin/dashboard"
               className="w-full sm:w-auto inline-flex items-center justify-center bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-600 hover:text-zinc-900 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors duration-200"
@@ -239,7 +228,6 @@ export default function EditPage() {
               Batal & Kembali
             </Link>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}

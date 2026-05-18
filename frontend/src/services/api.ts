@@ -29,7 +29,7 @@ export const getPosts = async (search: string = "") => {
 // 3. Menambahkan Artikel Baru (Halaman Admin)
 export async function createPost(data: { title: string; content: string; image: File }) {
   const baseUrl = getBaseUrl() // Menggunakan base url dinamis
-  const token = localStorage.getItem("admin.token")
+  const token = localStorage.getItem("admin_token")
   const formData = new FormData()
 
   formData.append("title", data.title)
@@ -59,7 +59,7 @@ export async function getPostById(id: string) {
 // 5. Mengubah Artikel
 export async function updatePost(id: string, data: { title: string; content: string; image?: File }) {
   const baseUrl = getBaseUrl()
-  const token = localStorage.getItem("admin.token")
+  const token = localStorage.getItem("admin_token")
   const formData = new FormData()
 
   formData.append("title", data.title)
@@ -89,7 +89,7 @@ export async function updatePost(id: string, data: { title: string; content: str
 // 6. Menghapus Artikel
 export async function deletePost(id: string) {
   const baseUrl = getBaseUrl()
-  const token = localStorage.getItem("admin.token")
+  const token = localStorage.getItem("admin_token")
 
   const res = await fetch(`${baseUrl}/admin/posts/${id}`, {
     method: "DELETE",
