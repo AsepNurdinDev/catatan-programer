@@ -23,11 +23,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://api.asepblog.my.id 
     container_name: journal-frontend
     ports:
       - "3001:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=https://api.asepblog.my.id
       - API_URL_SERVER=http://backend:8000  
     depends_on:
       - backend

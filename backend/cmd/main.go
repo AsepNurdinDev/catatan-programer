@@ -18,6 +18,8 @@ func main() {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:3000",
+			"http://localhost:3001",
+			"https://asepblog.my.id",
 		},
 		AllowMethods: []string{
 			"GET",
