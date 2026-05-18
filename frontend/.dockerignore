@@ -1,0 +1,22 @@
+# Mengabaikan folder dependency lokal
+node_modules
+.pnpm-store
+
+# Mengabaikan hasil build lokal
+.next
+out
+build
+
+# Mengabaikan log error
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Mengabaikan env dan file git
+.env
+.env.local
+.env.development
+.env.production
+.git
+.gitignore
