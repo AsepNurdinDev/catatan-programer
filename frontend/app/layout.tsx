@@ -14,8 +14,11 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "blog-ku",
+  title: "Catatan Programmer",
   description: "Personal tech blog by Asepshan",
+  icons: {
+    icon: "/favicon.png",      
+  },
 }
 
 export default function RootLayout({
@@ -26,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      suppressHydrationWarning  // ← tambahkan ini
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
@@ -35,7 +38,7 @@ export default function RootLayout({
             position="top-right"
             richColors
             closeButton
-          />       
+          />
       </body>
     </html>
   )
