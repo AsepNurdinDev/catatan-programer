@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SERVER_USER = 'asepnrdn'
-        SERVER_HOST = '127.0.0.1'
+        SERVER_HOST = '172.17.0.1'
         PROJECT_DIR = '/home/asepnrdn/catatan-programmer'
     }
 
