@@ -33,8 +33,7 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} '
                             cd ${PROJECT_DIR} &&
-                            docker compose down &&
-                            docker compose up -d --build
+                            docker compose up -d --build --no-deps backend frontend
                         '
                     """
                 }
