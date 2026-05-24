@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import React, { useState } from "react";
 import { Download, ExternalLink, Heart, X, FolderGit2 } from "lucide-react";
