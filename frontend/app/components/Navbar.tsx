@@ -30,7 +30,7 @@ export default function Navbar() {
             Blog
           </Link>
           <Link
-            href="/projects"
+            href="/project"
             className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-xl transition-all"
           >
             Projects
@@ -42,7 +42,7 @@ export default function Navbar() {
             About
           </Link>
           <Link
-            href="/donate"
+            href="/donation"
             className="px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all flex items-center gap-1.5"
           >
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -86,7 +86,7 @@ export default function Navbar() {
             Blog
           </Link>
           <Link
-            href="/projects"
+            href="/project"
             onClick={() => setIsOpen(false)}
             className="px-3 py-2.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-xl transition-all"
           >
@@ -100,7 +100,7 @@ export default function Navbar() {
             About
           </Link>
           <Link
-            href="/donate"
+            href="/donation"
             onClick={() => setIsOpen(false)}
             className="px-3 py-2.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all flex items-center gap-1.5"
           >

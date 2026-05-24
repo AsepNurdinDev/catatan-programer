@@ -23,13 +23,23 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/posts", controllers.FindPost)
 	router.GET("/posts/:id", controllers.FindPostById)
 
+	// public project
+	router.GET("/projects", controllers.FindProjects)
+	router.GET("/projects/:slug", controllers.FindProjectBySlug)
+
 	// admin group
 	admin := router.Group("/admin")
 	admin.Use(middlewares.AuthMiddleware())
 
 	{
+		// post management
 		admin.POST("/posts", controllers.StorePost)
 		admin.PUT("/posts/:id", controllers.UpdatePost)
 		admin.DELETE("/posts/:id", controllers.DeletePost)
+
+		// project management
+		admin.POST("/projects", controllers.StoreProject)
+		admin.PUT("/projects/:id", controllers.UpdateProject)
+		admin.DELETE("/projects/:id", controllers.DeleteProject)
 	}
 }

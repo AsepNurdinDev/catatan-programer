@@ -51,6 +51,7 @@ func ConnectDatabase() {
 	database.AutoMigrate(
 		&models.Post{},
 		&models.User{},
+		&models.Project{},
 	)
 
 	DB = database
