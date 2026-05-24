@@ -1,6 +1,7 @@
 import { getPosts } from "@/src/services/api"
 import Link from "next/link"
 import SearchInput from "@/app/components/SearchInput" 
+import Navbar from "@/app/components/Navbar"
 
 import {
   formatDate,
@@ -58,22 +59,7 @@ export default async function Home({
     <div className="min-h-screen flex flex-col bg-zinc-50/30 text-zinc-900 antialiased selection:bg-zinc-100">
       
       {/* HEADER - FIXED & RESPONSIVE */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-zinc-200/50">
-        <div className="max-w-7xl mx-auto px-6 py-4 sm:py-0 sm:h-20 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-center sm:text-left">
-            <h1 className="text-xl font-serif font-medium tracking-tight text-zinc-900">
-              <Link href="/">Catatan Programmer</Link>
-            </h1>
-            <p className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase mt-0.5">
-              Stories, Ideas & Perspectives
-            </p>
-          </div>
-
-          <div className="w-full sm:w-auto flex justify-center sm:justify-end">
-            <SearchInput />
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* MAIN CONTENT */}
       <main className="flex-grow max-w-7xl w-full mx-auto px-6 pt-40 sm:pt-32 pb-20 flex flex-col justify-between">
