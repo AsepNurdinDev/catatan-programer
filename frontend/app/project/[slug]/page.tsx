@@ -243,7 +243,7 @@ export default function ProjectDetailPage() {
 
             <div className="bg-zinc-50 border border-zinc-200/60 p-3 rounded-xl max-w-[160px] mx-auto">
               <img
-                src="/images/qris-donation.png"
+                src="/images/qris.jpg"
                 alt="QRIS Code Donasi"
                 className="w-full h-auto aspect-square object-contain mix-blend-multiply"
               />
