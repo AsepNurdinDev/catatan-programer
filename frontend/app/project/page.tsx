@@ -1,15 +1,15 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import Link from "next/link" // 👈 Menggunakan Link bawaan Next.js untuk navigasi halaman penuh
 import { getProjects } from "@/src/services/api"
-import { FolderGit2, Code2, ExternalLink, Eye, Download, X, Heart } from "lucide-react"
+import { FolderGit2, Code2, ExternalLink, Eye, Download, Heart } from "lucide-react"
 
 export default function PublicProjectPage() {
   const [projects, setProjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  // State untuk Modal Detail Proyek
-  const [selectedProject, setSelectedProject] = useState<any | null>(null)
+  // 🛡️ MODAL DETAIL PROYEK TELAH DIHAPUS (Dialihkan ke halaman penuh terpisah)
 
   // State untuk Modal QRIS Donasi
   const [donationModal, setDonationModal] = useState<{ isOpen: boolean; targetUrl: string }>({
@@ -38,7 +38,6 @@ export default function PublicProjectPage() {
   // Fungsi mengarahkan aksi sensitif (Download/Repo) lewat gate QRIS dulu
   const handleProtectedAction = (url: string) => {
     if (!url || url === "#") return
-    // Buka pop-up QRIS terlebih dahulu dan simpan url tujuan utama
     setDonationModal({ isOpen: true, targetUrl: url })
   }
 
@@ -92,8 +91,6 @@ export default function PublicProjectPage() {
               const tags = project.tech_stack ? project.tech_stack.split(",").map((t: string) => t.trim()) : ["Open Source"]
               const imageSrc = project.image && project.image.startsWith("http") ? project.image : `${API_URL}/uploads/${project.image}`
 
-              // Asumsi file zip di-upload admin dengan nama file yang sama atau bisa diunduh langsung dari zip source repo github
-              // Di sini kita arahkan ke endpoint download publik archive dari repo github, atau file lokal jika ada
               const downloadZipUrl = project.github_url && project.github_url !== "#" 
                 ? `${project.github_url}/archive/refs/heads/main.zip` 
                 : "#"
@@ -134,19 +131,19 @@ export default function PublicProjectPage() {
                         {project.title}
                       </h2>
 
-                      {/* 🔴 PERBAIKAN: Membatasi baris deskripsi dengan line-clamp-2 agar tinggi card simetris */}
-                      <p className="mt-2 text-sm text-zinc-600 leading-relaxed font-sans line-clamp-2">
+                      {/* 🔒 DESKRIPSI DIBATASI: Menggunakan line-clamp-2 agar tinggi card simetris & presisi */}
+                      <p className="mt-2 text-sm text-zinc-600 leading-relaxed font-sans line-clamp-2 h-10">
                         {project.description}
                       </p>
 
-                      {/* Tombol Lihat Detail */}
-                      <button 
-                        onClick={() => setSelectedProject(project)}
-                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold font-mono text-zinc-500 hover:text-zinc-950 transition-colors"
+                      {/* 🔗 TOMBOL NAVIGASI HALAMAN PENUH: Mengarah ke folder dinamis /project/[slug] */}
+                      <Link 
+                        href={`/project/${project.slug}`}
+                        className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold font-mono text-zinc-500 hover:text-zinc-950 transition-colors uppercase tracking-wider"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         LIHAT DETAIL PROYEK
-                      </button>
+                      </Link>
                     </div>
                   </div>
 
@@ -200,45 +197,7 @@ export default function PublicProjectPage() {
         )}
       </main>
 
-      {/* ================= MODAL 1: LIHAT DETAIL PROYEK ================= */}
-      {selectedProject && (
-        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full border border-zinc-200 overflow-hidden max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <span className="text-xs font-mono font-bold tracking-wider text-zinc-400 uppercase">Project Detail Showcase</span>
-              <button onClick={() => setSelectedProject(null)} className="p-1 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto space-y-4 font-sans text-sm text-zinc-700 leading-relaxed">
-              <h3 className="text-xl font-serif font-semibold text-zinc-950">{selectedProject.title}</h3>
-              
-              <div className="flex flex-wrap gap-1">
-                {selectedProject.tech_stack?.split(",").map((t: string, i: number) => (
-                  <span key={i} className="px-2 py-0.5 text-[10px] font-mono bg-zinc-100 text-zinc-600 rounded">{t.trim()}</span>
-                ))}
-              </div>
-
-              <div className="space-y-2 pt-2">
-                <span className="text-xs font-mono text-zinc-400 uppercase block">Ringkasan Deskripsi:</span>
-                <p>{selectedProject.description}</p>
-              </div>
-
-              {/* Jika field Content milik backend juga ingin kamu tampilkan utuh */}
-              {selectedProject.content && selectedProject.content !== selectedProject.description && (
-                <div className="space-y-2 pt-2 border-t border-zinc-100">
-                  <span className="text-xs font-mono text-zinc-400 uppercase block">Dokumentasi Tambahan / Fitur:</span>
-                  <p className="bg-zinc-50 p-4 rounded-xl text-xs font-mono whitespace-pre-line text-zinc-600 border border-zinc-200/40">
-                    {selectedProject.content}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL 2: GATE POP-UP QRIS DONASI (OPSIONAL) ================= */}
+      {/* ================= MODAL QRIS DONASI ================= */}
       {donationModal.isOpen && (
         <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full border border-zinc-200 p-6 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
@@ -254,9 +213,8 @@ export default function PublicProjectPage() {
               </p>
             </div>
 
-            {/* BOX TEMPAT SCAN QRIS KAMU */}
+            {/* BOX TEMPAT SCAN QRIS */}
             <div className="bg-zinc-50 border border-zinc-200/80 p-4 rounded-2xl max-w-[200px] mx-auto shadow-inner">
-              {/* ⚠️ GANTI SOURCE GAMBAR DI BAWAH INI DENGAN PATH / URL QRIS ASLI MILIKMU */}
               <img 
                 src="/images/qris.jpg" 
                 alt="QRIS Code Donasi" 
