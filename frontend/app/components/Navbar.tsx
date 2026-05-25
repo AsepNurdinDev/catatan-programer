@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import SearchInput from "@/app/components/SearchInput"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -55,7 +55,9 @@ export default function Navbar() {
         {/* KANAN — search tetap sama, tambah hamburger mobile */}
         <div className="w-full sm:w-auto flex items-center justify-center sm:justify-end gap-2">
           {/* Search tetap sama persis */}
-          <SearchInput />
+          <Suspense fallback={null}>
+            <SearchInput />
+          </Suspense>
 
           {/* Hamburger — hanya muncul di mobile */}
           <button
