@@ -1,9 +1,9 @@
 "use client"
 
 import React, { useState } from "react"
-import Link from "next/link" // 👈 Import Link untuk navigasi ke halaman edit
+import Link from "next/link" 
 import { deleteProject } from "@/src/services/api"
-import { Trash2, Code, Layers, Edit3 } from "lucide-react"
+import { Trash2, Code, Layers, Edit3, AlertTriangle, X } from "lucide-react"
 
 interface AdminProjectsProps {
   projects: any[]
@@ -13,6 +13,13 @@ interface AdminProjectsProps {
 export default function AdminProjects({ projects, setProjects }: AdminProjectsProps) {
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null)
   
+  // State untuk Modal Konfirmasi Hapus Kustom
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; projectId: number | null; projectTitle: string }>({
+    isOpen: false,
+    projectId: null,
+    projectTitle: ""
+  })
+
   // State untuk Toast Notifikasi Kustom
   const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
     show: false,
@@ -27,9 +34,19 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
     }, 3000)
   }
 
-  async function handleDelete(id: number) {
-    const konfirmasi = window.confirm("Apakah Anda yakin ingin menghapus proyek ini?")
-    if (!konfirmasi) return
+  // Memicu pembukaan modal konfirmasi kustom
+  const triggerDeleteConfirmation = (id: number, title: string) => {
+    setDeleteModal({
+      isOpen: true,
+      projectId: id,
+      projectTitle: title
+    })
+  }
+
+  // Eksekusi hapus setelah user menekan tombol konfirmasi di dalam modal
+  async function handleConfirmDelete() {
+    const id = deleteModal.projectId
+    if (!id) return
 
     setIsDeletingId(id)
     try {
@@ -37,16 +54,16 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
       
       if (response && (response.success || !response.error)) {
         setProjects((prev) => prev.filter((p) => (p.id || p.Id) !== id))
-        // 🔴 UBAH: Menggunakan Toast kustom, bukan alert browser
         showNotification("Proyek berhasil dihapus!")
       } else {
         showNotification(response.error || "Gagal menghapus proyek.", "error")
       }
     } catch (error) {
       console.error("Error saat menghapus project:", error)
-      showNotification("Terjadi kesalahan sistem saat menghapus data.", "error")
+      showNotification("Terjadi kesalahan sistem.", "error")
     } finally {
       setIsDeletingId(null)
+      setDeleteModal({ isOpen: false, projectId: null, projectTitle: "" })
     }
   }
 
@@ -67,7 +84,7 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
       {/* Kondisi jika data kosong */}
       {projects.length === 0 ? (
         <div className="p-12 text-center">
-          <p className="text-sm text-zinc-400">Belum ada data proyek yang ditemukan di database.</p>
+          <p className="text-sm font-mono text-zinc-400 uppercase tracking-wider">Belum ada data proyek di database.</p>
         </div>
       ) : (
         /* TABEL RESPONSIVE */
@@ -135,7 +152,6 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
                     <td className="p-4 pr-6 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
                         
-                        {/* 🛠️ TAMBAH OPSI EDIT: Navigasi ke halaman terpisah membawa ID */}
                         <Link
                           href={`/admin/projects/edit/${projectId}`}
                           className="p-1.5 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg transition-all"
@@ -157,9 +173,8 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
                         )}
 
                         <button
-                          onClick={() => handleDelete(projectId)}
-                          disabled={isDeletingId === projectId}
-                          className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all disabled:opacity-40"
+                          onClick={() => triggerDeleteConfirmation(projectId, project.title)}
+                          className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all"
                           title="Hapus Project"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -175,9 +190,64 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
         </div>
       )}
 
+      {/* ================= MODAL KONFIRMASI HAPUS KUSTOM (POP-UP) ================= */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full border border-zinc-200 p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150 relative">
+            
+            {/* Tombol Close Pojok Atas */}
+            <button 
+              onClick={() => setDeleteModal({ isOpen: false, projectId: null, projectTitle: "" })}
+              className="absolute top-4 right-4 p-1 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Icon Peringatan */}
+            <div className="w-10 h-10 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl flex items-center justify-center shadow-sm">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+
+            {/* Konten Teks */}
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-zinc-950">Hapus Proyek Portofolio?</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Tindakan ini tidak dapat dibatalkan. Proyek <span className="font-semibold text-zinc-800">"{deleteModal.projectTitle}"</span> akan dihapus permanen dari basis data.
+              </p>
+            </div>
+
+            {/* Aksi Tombol Pilihan */}
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, projectId: null, projectTitle: "" })}
+                className="flex-1 py-2 border border-zinc-200 text-zinc-700 bg-white rounded-xl text-xs font-semibold hover:bg-zinc-50 transition-colors"
+                disabled={isDeletingId !== null}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isDeletingId !== null}
+                className="flex-1 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-700 transition-colors shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeletingId ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Menghapus...
+                  </>
+                ) : (
+                  "Ya, Hapus"
+                )}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* ================= TOAST NOTIFICATION KUSTOM ================= */}
       {toast.show && (
-        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-5 right-5 z-[60] animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className={`px-5 py-3 rounded-xl shadow-lg border text-xs font-semibold font-mono tracking-wide flex items-center gap-2.5 ${
             toast.type === "success" 
               ? "bg-zinc-950 text-white border-zinc-800" 
