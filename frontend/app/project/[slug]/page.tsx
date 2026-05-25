@@ -246,10 +246,6 @@ export default function ProjectDetailPage() {
                 src="/images/qris-donation.png"
                 alt="QRIS Code Donasi"
                 className="w-full h-auto aspect-square object-contain mix-blend-multiply"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://asepblog.my.id";
-                }}
               />
               <span className="text-[9px] font-mono text-zinc-400 tracking-wider uppercase block mt-1.5">
                 SCAN QRIS CODE
