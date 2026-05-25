@@ -282,7 +282,7 @@ export default function DonationPage() {
 
             <div className="bg-zinc-50 p-4 rounded-xl inline-block border border-zinc-200 mb-5 w-full max-w-[240px] mx-auto">
               <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=QRIS_SOCIAL_CHARITY_DONATION" 
+                src="/images/qris.jpg" 
                 alt="QRIS Donasi Utama" 
                 className="w-44 h-44 object-contain mx-auto mix-blend-multiply p-1 bg-white rounded-md border border-zinc-200"
               />
