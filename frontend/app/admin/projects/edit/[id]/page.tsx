@@ -104,7 +104,7 @@ export default function AdminEditProjectPage() {
       
       // Tunggu sebentar biar admin liat toast sukses, lalu balik ke dashboard
       setTimeout(() => {
-        router.push("/admin") // Sesuaikan path dashboard admin kamu
+        router.push("/admin/dashboard") // Sesuaikan path dashboard admin kamu
       }, 1500)
     } catch (error) {
       console.error(error)

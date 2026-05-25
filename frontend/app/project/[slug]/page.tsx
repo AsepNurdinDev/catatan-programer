@@ -10,7 +10,6 @@ import {
   Download,
   FolderGit2,
   Heart,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -34,10 +33,8 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     async function fetchDetailProject() {
       try {
-        // Mengambil semua data project publik dari API Golang kamu
         const data = await getProjects();
         if (Array.isArray(data)) {
-          // Cari project spesifik yang kolom slug-nya cocok dengan isi URL browser
           const found = data.find((p: any) => p.slug === params.slug);
           setProject(found || null);
         }
@@ -63,14 +60,14 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50/30 p-6">
-        <p className="text-zinc-500 font-medium mb-4">
+        <p className="text-zinc-500 text-xs font-mono mb-4 uppercase tracking-wider">
           Proyek tidak ditemukan atau telah dihapus.
         </p>
         <button
           onClick={() => router.push("/project")}
-          className="text-sm font-semibold flex items-center gap-2 text-zinc-950 hover:underline"
+          className="text-xs font-mono font-bold uppercase border-b border-zinc-950 pb-0.5 flex items-center gap-2 text-zinc-950 transition-all hover:opacity-70"
         >
-          <ArrowLeft className="w-4 h-4" /> Kembali ke Portofolio
+          <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Portofolio
         </button>
       </div>
     );
@@ -84,19 +81,16 @@ export default function ProjectDetailPage() {
       ? project.image
       : `${API_URL}/uploads/${project.image}`;
 
-  // URL Otomatis untuk mendownload ZIP langsung dari Repository GitHub utama
   const downloadZipUrl =
     project.github_url && project.github_url !== "#"
       ? `${project.github_url}/archive/refs/heads/main.zip`
       : "#";
 
-  // Fungsi pengadang aksi unduh / repositori lewat QRIS dulu
   const handleProtectedAction = (url: string) => {
     if (!url || url === "#") return;
     setDonationModal({ isOpen: true, targetUrl: url });
   };
 
-  // Melanjutkan aksi ke tab baru jika user menekan tombol lanjut
   const proceedToTarget = () => {
     const url = donationModal.targetUrl;
     setDonationModal({ isOpen: false, targetUrl: "" });
@@ -106,134 +100,148 @@ export default function ProjectDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50/30 text-zinc-800 antialiased pb-24 relative pt-32">
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-zinc-200/50">
-        <div className="max-w-3xl mx-auto px-6 h-20 flex items-center justify-between py-3">
-          <div>
-            <h1 className="text-xl font-serif font-medium tracking-tight text-zinc-900">
-              <Link href="/">Catatan Programmer</Link>
-            </h1>
-            <p className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase mt-0.5">
-              Stories, Ideas & Perspectives
-            </p>
-          </div>
-        </div>
-      </header>
-
-      {/* NAVBAR TOMBOL KEMBALI - Diberi `pt-28` agar tidak tertimbun Header Fixed */}
-      <nav className="max-w-3xl w-full mx-auto px-6 pt-28">
-        <Link
-          href="/project"
-          className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-zinc-900 transition-colors"
-        >
-          ← Back to Project
-        </Link>
-      </nav>
-      <div className="max-w-3xl w-full mx-auto px-6">
-        {/* Banner Gambar Proyek */}
-        <div className="w-full h-64 sm:h-96 bg-zinc-100 rounded-2xl overflow-hidden border border-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] mb-10 flex items-center justify-center">
-          {project.image ? (
-            <img
-              src={imageSrc}
-              alt={project.title}
-              className="max-w-full max-h-full object-contain"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-zinc-300">
-              <Code2 className="w-12 h-12 stroke-[1.2]" />
+    <div className="min-h-screen bg-zinc-50/30 text-zinc-800 font-sans antialiased flex flex-col justify-between">
+      
+      {/* MAIN CONTAINER LAYOUT */}
+      <div className="w-full flex-grow">
+        {/* HEADER NAVBAR FIXED */}
+        <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-zinc-100">
+          <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
+            <div>
+              <h1 className="text-base font-serif font-semibold tracking-tight text-zinc-900">
+                <Link href="/">Catatan Programmer</Link>
+              </h1>
+              <p className="text-[9px] font-mono tracking-widest text-zinc-400 uppercase">
+                Stories, Ideas & Perspectives
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        </header>
 
-        {/* Informasi Atas & Tagging */}
-        <div className="space-y-4 border-b border-zinc-200 pb-8">
-          <div className="flex flex-wrap gap-1.5">
-            <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-zinc-950 text-white uppercase tracking-wider">
-              {project.category || "General"}
-            </span>
-            {tags.map((tag: string, idx: number) => (
-              <span
-                key={idx}
-                className="px-2 py-0.5 text-[10px] font-mono rounded bg-zinc-100 text-zinc-600 border border-zinc-200/40"
-              >
-                {tag}
+        {/* CONTEN WRAPPER: Diperpendek pt-nya agar merapat ke bawah Navbar */}
+        <div className="max-w-2xl mx-auto px-5 pt-24 pb-16">
+          
+          {/* NAV TOMBOL KEMBALI (Sudah presisi jarak tingginya) */}
+          <nav className="mb-6">
+            <Link
+              href="/project"
+              className="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-zinc-400 hover:text-zinc-950 transition-colors uppercase tracking-wider"
+            >
+              ← Project
+            </Link>
+          </nav>
+
+          {/* COVER GAMBAR PROYEK: Menjaga proporsi tanpa crop & auto height */}
+          <div className="w-full bg-white rounded-xl overflow-hidden border border-zinc-200/60 shadow-[0_3px_10px_rgba(0,0,0,0.01)] mb-8 flex items-center justify-center p-2 sm:p-4">
+            {project.image ? (
+              <img
+                src={imageSrc}
+                alt={project.title}
+                className="w-full h-auto max-h-[420px] object-contain rounded-lg"
+              />
+            ) : (
+              <div className="w-full h-48 flex items-center justify-center text-zinc-300 bg-zinc-50 rounded-lg">
+                <Code2 className="w-8 h-8 stroke-[1.2]" />
+              </div>
+            )}
+          </div>
+
+          {/* HEADLINE & TAGS */}
+          <div className="space-y-3.5 border-b border-zinc-100 pb-6">
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded bg-zinc-950 text-white uppercase tracking-wider">
+                {project.category || "General"}
               </span>
-            ))}
+              {tags.map((tag: string, idx: number) => (
+                <span
+                  key={idx}
+                  className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-zinc-100 text-zinc-500 border border-zinc-200/30"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-serif font-medium text-zinc-950 tracking-tight leading-snug">
+              {project.title}
+            </h1>
           </div>
 
-          <h1 className="text-3xl font-serif font-semibold text-zinc-950 tracking-tight sm:text-4xl leading-tight">
-            {project.title}
-          </h1>
-        </div>
+          {/* DESKRIPSI & DOKUMENTASI (Sangat nyaman dibaca) */}
+          <div className="py-6 space-y-5 text-zinc-600 text-sm sm:text-[15px] leading-relaxed tracking-normal border-b border-zinc-100">
+            <p className="font-normal text-zinc-900 leading-relaxed">
+              {project.description}
+            </p>
 
-        {/* Konten Isi Deskripsi Lengkap */}
-        <div className="py-8 space-y-6 text-zinc-700 leading-relaxed text-sm sm:text-base border-b border-zinc-200">
-          <p className="font-medium text-zinc-900 text-base sm:text-lg leading-relaxed">
-            {project.description}
-          </p>
+            {project.content && project.content !== project.description && (
+              <div className="pt-4 border-t border-zinc-100/80 font-normal text-xs sm:text-sm text-zinc-500 whitespace-pre-line leading-relaxed">
+                {project.content}
+              </div>
+            )}
+          </div>
 
-          {/* Menampilkan text area 'content' dokumentasi yang diisi admin */}
-          {project.content && project.content !== project.description && (
-            <div className="pt-4 border-t border-zinc-100 font-normal whitespace-pre-line text-zinc-600">
-              {project.content}
-            </div>
-          )}
-        </div>
+          {/* PANEL TOMBOL LINK RESUSABLE */}
+          <div className="bg-white border border-zinc-200/60 p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.01)] grid grid-cols-1 sm:grid-cols-3 gap-2 mt-8">
+            <button
+              onClick={() => handleProtectedAction(project.github_url)}
+              className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 transition-colors"
+            >
+              <FolderGit2 className="w-3.5 h-3.5" /> Repository
+            </button>
 
-        {/* Panel Tombol Unduh & Tautan (Aksi Utama) */}
-        <div className="bg-white border border-zinc-200 p-6 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10">
-          {/* 🔒 Punya QRIS Gate */}
-          <button
-            onClick={() => handleProtectedAction(project.github_url)}
-            className="flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 transition-all text-zinc-800"
-          >
-            <FolderGit2 className="w-4 h-4" /> Buka Repository
-          </button>
+            <a
+              href={project.live_url || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold rounded-lg transition-all ${
+                project.live_url && project.live_url !== "#"
+                  ? "bg-zinc-950 text-white hover:bg-zinc-800 shadow-sm"
+                  : "bg-zinc-100 text-zinc-300 pointer-events-none"
+              }`}
+            >
+              Live Preview <ExternalLink className="w-3 h-3" />
+            </a>
 
-          {/* 🌐 Terbuka Publik Langsung */}
-          <a
-            href={project.live_url || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold rounded-xl transition-all ${
-              project.live_url && project.live_url !== "#"
-                ? "bg-zinc-950 text-white hover:bg-zinc-800"
-                : "bg-zinc-100 text-zinc-300 pointer-events-none"
-            }`}
-          >
-            Live Preview <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+            <button
+              onClick={() => handleProtectedAction(downloadZipUrl)}
+              className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold rounded-lg bg-zinc-100 text-zinc-700 hover:bg-zinc-200/70 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" /> Download ZIP
+            </button>
+          </div>
 
-          {/* 🔒 Punya QRIS Gate */}
-          <button
-            onClick={() => handleProtectedAction(downloadZipUrl)}
-            className="flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold rounded-xl bg-zinc-100 text-zinc-700 hover:bg-zinc-200/80 transition-all"
-          >
-            <Download className="w-4 h-4" /> Download ZIP
-          </button>
         </div>
       </div>
 
+      {/* FOOTER DI BAGIAN DASAR HALAMAN */}
+      <footer className="bg-white border-t border-zinc-100 py-6 text-xs font-sans text-zinc-400 w-full">
+        <div className="max-w-2xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p>© {new Date().getFullYear()} The Journal. All rights reserved.</p>
+          <div className="flex gap-4 font-medium">
+            <a href="#" className="hover:text-zinc-950 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-zinc-950 transition-colors">Terms</a>
+          </div>
+        </div>
+      </footer>
+
       {/* ================= POP-UP GATE QRIS DONASI (MODAL OVERLAY) ================= */}
       {donationModal.isOpen && (
-        <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full border border-zinc-200 p-6 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 bg-rose-50 border border-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto shadow-sm">
-              <Heart className="w-5 h-5 fill-rose-500" />
+        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-xs w-full border border-zinc-200 p-5 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-10 h-10 bg-rose-50 border border-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto shadow-sm">
+              <Heart className="w-4 h-4 fill-rose-500" />
             </div>
 
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold text-zinc-900">
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-semibold text-zinc-900">
                 Dukung Kreator Portofolio
               </h3>
-              <p className="text-xs text-zinc-500 leading-relaxed px-2">
-                Donasi seikhlasnya untuk mendukung pengembangan sistem
-                open-source ini terus berjalan aktif.
+              <p className="text-[11px] text-zinc-400 leading-relaxed px-1">
+                Donasi seikhlasnya untuk mendukung pengembangan sistem open-source ini.
               </p>
             </div>
 
-            {/* Kotak Kode Batang QRIS */}
-            <div className="bg-zinc-50 border border-zinc-200/80 p-4 rounded-2xl max-w-[200px] mx-auto shadow-inner">
+            <div className="bg-zinc-50 border border-zinc-200/60 p-3 rounded-xl max-w-[160px] mx-auto">
               <img
                 src="/images/qris-donation.png"
                 alt="QRIS Code Donasi"
@@ -243,24 +251,21 @@ export default function ProjectDetailPage() {
                     "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://asepblog.my.id";
                 }}
               />
-              <span className="text-[10px] font-mono text-zinc-400 tracking-widest uppercase block mt-2">
+              <span className="text-[9px] font-mono text-zinc-400 tracking-wider uppercase block mt-1.5">
                 SCAN QRIS CODE
               </span>
             </div>
 
-            {/* Tombol Opsi */}
-            <div className="flex flex-col gap-2 pt-2">
+            <div className="flex flex-col gap-1.5 pt-1">
               <button
                 onClick={proceedToTarget}
-                className="w-full py-2.5 bg-zinc-950 text-white rounded-xl text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm"
+                className="w-full py-2 bg-zinc-950 text-white rounded-lg text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm"
               >
                 Sudah Scan / Lanjutkan Unduh
               </button>
               <button
-                onClick={() =>
-                  setDonationModal({ isOpen: false, targetUrl: "" })
-                }
-                className="w-full py-2 text-zinc-500 hover:text-zinc-900 rounded-xl text-xs font-medium transition-colors"
+                onClick={() => setDonationModal({ isOpen: false, targetUrl: "" })}
+                className="w-full py-1.5 text-zinc-400 hover:text-zinc-800 rounded-lg text-[11px] font-medium transition-colors"
               >
                 Lewati Donasi
               </button>
@@ -269,19 +274,6 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      <footer className="bg-white border-t border-zinc-100 py-8 text-center text-xs font-sans text-zinc-400">
-        <div className="max-w-3xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} The Journal. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-zinc-950 transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-zinc-950 transition-colors">
-              Terms
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
