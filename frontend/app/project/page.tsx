@@ -248,6 +248,20 @@ export default function PublicProjectPage() {
         </div>
       )}
 
+      <footer className="bg-white border-t border-zinc-100 py-8 text-center text-xs font-sans text-zinc-400">
+        <div className="max-w-3xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© {new Date().getFullYear()} The Journal. All rights reserved.</p>
+          <div className="flex gap-4">
+            <a href="#" className="hover:text-zinc-950 transition-colors">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-zinc-950 transition-colors">
+              Terms
+            </a>
+          </div>
+        </div>
+      </footer>
+
     </div>
   )
 }

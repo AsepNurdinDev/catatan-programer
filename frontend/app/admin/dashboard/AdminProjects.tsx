@@ -1,8 +1,9 @@
 "use client"
 
 import React, { useState } from "react"
+import Link from "next/link" // 👈 Import Link untuk navigasi ke halaman edit
 import { deleteProject } from "@/src/services/api"
-import { Trash2, Code, Layers } from "lucide-react"
+import { Trash2, Code, Layers, Edit3 } from "lucide-react"
 
 interface AdminProjectsProps {
   projects: any[]
@@ -11,6 +12,20 @@ interface AdminProjectsProps {
 
 export default function AdminProjects({ projects, setProjects }: AdminProjectsProps) {
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null)
+  
+  // State untuk Toast Notifikasi Kustom
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+    show: false,
+    message: "",
+    type: "success"
+  })
+
+  const showNotification = (message: string, type: "success" | "error" = "success") => {
+    setToast({ show: true, message, type })
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" })
+    }, 3000)
+  }
 
   async function handleDelete(id: number) {
     const konfirmasi = window.confirm("Apakah Anda yakin ingin menghapus proyek ini?")
@@ -20,24 +35,23 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
     try {
       const response = await deleteProject(id)
       
-      // Menyesuaikan struktur json response dari Gin (biasanya success: true)
       if (response && (response.success || !response.error)) {
-        // Filter out project yang dihapus dari state agar UI langsung terupdate otomatis
         setProjects((prev) => prev.filter((p) => (p.id || p.Id) !== id))
-        alert("Proyek berhasil dihapus!")
+        // 🔴 UBAH: Menggunakan Toast kustom, bukan alert browser
+        showNotification("Proyek berhasil dihapus!")
       } else {
-        alert(response.error || "Gagal menghapus proyek.")
+        showNotification(response.error || "Gagal menghapus proyek.", "error")
       }
     } catch (error) {
       console.error("Error saat menghapus project:", error)
-      alert("Terjadi kesalahan sistem saat menghapus data.")
+      showNotification("Terjadi kesalahan sistem saat menghapus data.", "error")
     } finally {
       setIsDeletingId(null)
     }
   }
 
   return (
-    <div className="w-full bg-white border border-zinc-200/60 rounded-2xl shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)] overflow-hidden">
+    <div className="w-full bg-white border border-zinc-200/60 rounded-2xl shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)] overflow-hidden relative">
       
       {/* Header Panel */}
       <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
@@ -117,9 +131,19 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
                       )}
                     </td>
 
-                    {/* Kolom 5: Tombol Aksi Hapus */}
+                    {/* Kolom 5: Tombol Aksi */}
                     <td className="p-4 pr-6 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5">
+                        
+                        {/* 🛠️ TAMBAH OPSI EDIT: Navigasi ke halaman terpisah membawa ID */}
+                        <Link
+                          href={`/admin/projects/edit/${projectId}`}
+                          className="p-1.5 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg transition-all"
+                          title="Edit Proyek"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Link>
+
                         {project.github_url && project.github_url !== "#" && (
                           <a 
                             href={project.github_url} 
@@ -131,6 +155,7 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
                             <Code className="w-4 h-4" />
                           </a>
                         )}
+
                         <button
                           onClick={() => handleDelete(projectId)}
                           disabled={isDeletingId === projectId}
@@ -149,6 +174,21 @@ export default function AdminProjects({ projects, setProjects }: AdminProjectsPr
           </table>
         </div>
       )}
+
+      {/* ================= TOAST NOTIFICATION KUSTOM ================= */}
+      {toast.show && (
+        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className={`px-5 py-3 rounded-xl shadow-lg border text-xs font-semibold font-mono tracking-wide flex items-center gap-2.5 ${
+            toast.type === "success" 
+              ? "bg-zinc-950 text-white border-zinc-800" 
+              : "bg-rose-50 text-rose-600 border-rose-200"
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${toast.type === "success" ? "bg-emerald-400 animate-pulse" : "bg-rose-500"}`} />
+            {toast.message.toUpperCase()}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

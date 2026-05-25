@@ -22,6 +22,20 @@ export default function CreateProjectPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
+  // State untuk Toast Notifikasi Kustom
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+    show: false,
+    message: "",
+    type: "success"
+  })
+
+  const showNotification = (message: string, type: "success" | "error" = "success") => {
+    setToast({ show: true, message, type })
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" })
+    }, 3000)
+  }
+
   // Menangani perubahan input gambar & membuat preview singkat
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -43,11 +57,15 @@ export default function CreateProjectPage() {
       return
     }
 
+    // Mengotomatiskan pembuatan slug dari title agar pas dengan link rute detail baru kita
+    const generatedSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")
+
     // Bungkus semua data ke dalam FormData karena ada pengiriman file gambar
     const formData = new FormData()
     formData.append("title", title)
+    formData.append("slug", generatedSlug) // 👈 Mengirimkan slug otomatis
     formData.append("description", description)
-    formData.append("content", description)
+    formData.append("content", description) // Sementara disamakan dengan description, atau bisa ditambah field khusus nantinya
     formData.append("category", category)
     formData.append("tech_stack", techStack) 
     formData.append("github_url", githubUrl)
@@ -58,10 +76,14 @@ export default function CreateProjectPage() {
     try {
       const response = await createProject(formData)
       
-      // Sesuaikan pengecekan respons sesuai struktur backend kamu (misal data.success atau langsung response)
       if (response && (response.success || !response.error)) {
-        alert("Proyek baru berhasil dipublikasikan!")
-        router.push("/admin/dashboard") // Kembali ke dashboard setelah sukses
+        // 🔴 SELESAI: Pemicu Pop-up Toast kustom menggantikan alert()
+        showNotification("Proyek baru berhasil dipublikasikan!")
+        
+        // Beri jeda 1.5 detik agar user sempat membaca Toast, lalu arahkan kembali ke dashboard admin
+        setTimeout(() => {
+          router.push("/admin/dashboard")
+        }, 1500)
       } else {
         setError(response.error || "Gagal menyimpan proyek ke server.")
       }
@@ -74,7 +96,7 @@ export default function CreateProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 text-zinc-900 antialiased font-sans py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-zinc-50/50 text-zinc-900 antialiased font-sans py-12 px-4 sm:px-6 lg:px-8 relative">
       <div className="max-w-2xl mx-auto">
         
         {/* Navigasi Kembali */}
@@ -253,6 +275,21 @@ export default function CreateProjectPage() {
 
         </form>
       </div>
+
+      {/* ================= TOAST NOTIFICATION KUSTOM ================= */}
+      {toast.show && (
+        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className={`px-5 py-3 rounded-xl shadow-lg border text-xs font-semibold font-mono tracking-wide flex items-center gap-2.5 ${
+            toast.type === "success" 
+              ? "bg-zinc-950 text-white border-zinc-800" 
+              : "bg-rose-50 text-rose-600 border-rose-200"
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${toast.type === "success" ? "bg-emerald-400 animate-pulse" : "bg-rose-500"}`} />
+            {toast.message.toUpperCase()}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
