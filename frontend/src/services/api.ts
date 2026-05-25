@@ -18,7 +18,6 @@ export const getPosts = async (search: string = "") => {
     if (!res.ok) return []
     
     const responseData = await res.json()
-    // KORREKSI CADANGAN: Jika backend membungkus datanya dalam object data (cth: { data: [...] })
     return responseData.data || responseData || []
   } catch (error) {
     console.error("Gagal melakukan fetch data di getPosts:", error)
@@ -110,5 +109,105 @@ export async function login(email: string, password: string) {
     },
     body: JSON.stringify({ email, password }),
   })
+  return res.json()
+}
+
+// ======================== MANAGEMENT PROJECTS (BARU & LENGKAP) ========================
+
+// 8. [READ ALL] Mengambil Semua Project (Public & Admin)
+export const getProjects = async (search: string = "", category: string = "") => {
+  const baseUrl = getBaseUrl()
+  try {
+    const params = new URLSearchParams()
+    if (search) params.append("search", search)
+    if (category) params.append("category", category)
+
+    const res = await fetch(`${baseUrl}/projects?${params.toString()}`, {
+      cache: "no-store",
+    })
+
+    if (!res.ok) return []
+
+    const responseData = await res.json()
+    return responseData.data || responseData || []
+  } catch (error) {
+    console.error("Gagal memuat data di getProjects:", error)
+    return []
+  }
+}
+
+// 9. [READ SINGLE] Mengambil Detail Satu Project Berdasarkan ID
+export async function getProjectById(id: string | number) {
+  const baseUrl = getBaseUrl()
+  try {
+    const res = await fetch(`${baseUrl}/projects/${id}`, {
+      cache: "no-store",
+    })
+    if (!res.ok) return null
+    
+    const responseData = await res.json()
+    return responseData.data || responseData || null
+  } catch (error) {
+    console.error(`Gagal memuat detail project ID ${id}:`, error)
+    return null
+  }
+}
+
+// 10. [CREATE] Mengirim Project Baru ke Backend (Admin Only)
+export async function createProject(formData: FormData) {
+  const baseUrl = getBaseUrl()
+  const token = localStorage.getItem("admin_token")
+
+  const res = await fetch(`${baseUrl}/admin/projects`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData, // Menggunakan FormData karena menyertakan file gambar
+  })
+
+  if (!res.ok) {
+    throw new Error(`Gagal menyimpan project, status HTTP: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+// 11. [UPDATE] Mengubah Data Proyek (Admin Only)
+export async function updateProject(id: string | number, formData: FormData) {
+  const baseUrl = getBaseUrl()
+  const token = localStorage.getItem("admin_token")
+
+  const res = await fetch(`${baseUrl}/admin/projects/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    throw new Error(`Gagal memperbarui project, status HTTP: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+// 12. [DELETE] Menghapus Project dari Database (Admin Only)
+export async function deleteProject(id: string | number) {
+  const baseUrl = getBaseUrl()
+  const token = localStorage.getItem("admin_token")
+
+  const res = await fetch(`${baseUrl}/admin/projects/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error(`Gagal menghapus project, status HTTP: ${res.status}`)
+  }
+
   return res.json()
 }
