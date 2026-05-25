@@ -8,6 +8,8 @@ import (
 )
 
 func SetupRoutes(router *gin.Engine) {
+	// ⚠️ PASANG CORS DI SINI SEBAGAI TAMENG UTAMA ROUTER GLOBAL
+	router.Use(middlewares.CORSMiddleware())
 
 	// home
 	router.GET("/", func(c *gin.Context) {
