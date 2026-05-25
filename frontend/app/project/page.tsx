@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import Link from "next/link" // 👈 Menggunakan Link bawaan Next.js untuk navigasi halaman penuh
 import { getProjects } from "@/src/services/api"
 import { FolderGit2, Code2, ExternalLink, Eye, Download, Heart } from "lucide-react"
+import Navbar from "../components/Navbar"
 
 export default function PublicProjectPage() {
   const [projects, setProjects] = useState<any[]>([])
@@ -52,6 +53,7 @@ export default function PublicProjectPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50/30 text-zinc-800 antialiased selection:bg-zinc-100 relative">
+      <Navbar />
       
       {/* AREA KONTEN UTAMA */}
       <main className="max-w-6xl w-full mx-auto px-6 pt-32 pb-24">

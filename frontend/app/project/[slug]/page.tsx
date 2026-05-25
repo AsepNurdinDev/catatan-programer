@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { getProjects } from "@/src/services/api"
 import { ArrowLeft, Code2, ExternalLink, Download, FolderGit2, Heart, X } from "lucide-react"
+import Link from "next/link"
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -86,13 +87,28 @@ export default function ProjectDetailPage() {
     <div className="min-h-screen bg-zinc-50/30 text-zinc-800 antialiased pb-24 relative pt-32">
       <div className="max-w-3xl w-full mx-auto px-6">
         
-        {/* Tombol Navigasi Kembali */}
-        <button 
-          onClick={() => router.push("/project")}
-          className="inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider text-zinc-400 hover:text-zinc-950 uppercase mb-8 transition-colors"
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-zinc-200/50">
+        <div className="max-w-3xl mx-auto px-6 h-20 flex items-center justify-between py-3">
+          <div>
+            <h1 className="text-xl font-serif font-medium tracking-tight text-zinc-900">
+              <Link href="/">Catatan Programmer</Link>
+            </h1>
+            <p className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase mt-0.5">
+              Stories, Ideas & Perspectives
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* NAVBAR TOMBOL KEMBALI - Diberi `pt-28` agar tidak tertimbun Header Fixed */}
+      <nav className="max-w-3xl w-full mx-auto px-6 pt-28">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-zinc-900 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> KEMBALI KE PORTOFOLIO
-        </button>
+          ← Back to Journal
+        </Link>
+      </nav>
 
         {/* Banner Gambar Proyek */}
         <div className="w-full h-64 sm:h-96 bg-zinc-100 rounded-2xl overflow-hidden border border-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] mb-10">
