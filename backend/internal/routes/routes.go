@@ -40,7 +40,6 @@ func SetupRoutes(router *gin.Engine) {
 	// admin group
 	admin := router.Group("/admin")
 	admin.Use(middlewares.AuthMiddleware())
-
 	{
 		// post management
 		admin.POST("/posts", controllers.StorePost)
@@ -52,8 +51,8 @@ func SetupRoutes(router *gin.Engine) {
 		admin.PUT("/projects/:id", controllers.UpdateProject)
 		admin.DELETE("/projects/:id", controllers.DeleteProject)
 
-		// detail donation
-		admin.GET("/donations/dashboard", controllers.GetAdminDonationDashboard)
+		// 🛠️ UPDATE & TAMBAHAN ENDPOINT MANAJEMEN KAS/DONASI DI SINI
+		admin.GET("/donations", controllers.GetAdminDonationDashboard)
+		admin.POST("/expenses", controllers.CreateExpenseHandler)
 	}
 }
-

@@ -2,24 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-// Pastikan menambahkan fungsi getDonations & createExpense di api client kamu nanti
 import { getPosts, getProjects, getDonations, createExpense } from "@/src/services/api";
-import { BookOpen, FolderGit2, Server, ArrowUpRight, Menu, Activity, Calendar, DollarSign } from "lucide-react";
+import { BookOpen, FolderGit2, ArrowUpRight, Menu, Activity, Calendar, DollarSign } from "lucide-react";
 import AdminPosts from "@/app/admin/posts/page";
 import AdminProjects from "./AdminProjects"; 
-import AdminDonations from "./AdminDonations"; // Import Komponen Baru
+import AdminDonations from "./AdminDonations";
 import Sidebar from "@/app/components/Sidebar";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false); // Solusi anti-hydration error untuk tanggal
   const [posts, setPosts] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
-  const [mutations, setMutations] = useState<any[]>([]); // State Mutasi Kas Baru
+  const [mutations, setMutations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "kelola-posts" | "kelola-projects" | "kelola-donasi">("overview");
 
+  // Atur sidebar berdasarkan lebar layar
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined" && window.innerWidth >= 1024) {
       setIsSidebarOpen(true);
     }
@@ -27,7 +29,6 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      // Ambil tiga data sekaligus secara paralel (Posts, Projects, Donations)
       const [postsResponse, projectsResponse, donationsResponse] = await Promise.all([
         getPosts(),
         getProjects(),
@@ -36,7 +37,13 @@ export default function DashboardPage() {
 
       if (Array.isArray(postsResponse)) setPosts(postsResponse);
       if (Array.isArray(projectsResponse)) setProjects(projectsResponse);
-      if (Array.isArray(donationsResponse)) setMutations(donationsResponse);
+      
+      // Ambil array data dari response pembungkus jika format dari backend adalah { data: [...] }
+      if (donationsResponse && Array.isArray(donationsResponse.data)) {
+        setMutations(donationsResponse.data);
+      } else if (Array.isArray(donationsResponse)) {
+        setMutations(donationsResponse);
+      }
     } catch (error) {
       console.error("Gagal mengambil data dashboard:", error);
     } finally {
@@ -59,21 +66,22 @@ export default function DashboardPage() {
     router.push("/login");
   }
 
-  // Aksi simpan pengeluaran manual via API backend Go
-  const handleAddExpense = async (amount: number, notes: string) => {
-    try {
-      await createExpense(amount, notes);
-      fetchDashboardData(); // Refresh data finansial terbaru setelah sukses input
-    } catch (error) {
-      console.error("Gagal mencatat pengeluaran:", error);
-    }
-  };
+const handleAddExpense = async (amount: number, notes: string, category: string) => {
+  try {
+    // Pastikan service createExpense kamu di api.ts disesuaikan juga untuk menerima field category
+    await createExpense(amount, notes, category);
+    await fetchDashboardData(); 
+  } catch (error) {
+    console.error("Gagal mencatat pengeluaran:", error);
+  }
+};
 
-  // Hitung Nilai Kas untuk Ringkasan Card Depan Overview
+  // Kalkulasi total kas
   const totalIn = mutations.filter(m => m.type === "IN").reduce((sum, m) => sum + m.amount, 0);
   const totalOut = mutations.filter(m => m.type === "OUT").reduce((sum, m) => sum + m.amount, 0);
   const currentBalance = totalIn - totalOut;
 
+  // Persentase kontribusi modul
   const totalItems = posts.length + projects.length;
   const postPercentage = totalItems > 0 ? Math.round((posts.length / totalItems) * 100) : 0;
   const projectPercentage = totalItems > 0 ? Math.round((projects.length / totalItems) * 100) : 0;
@@ -88,7 +96,6 @@ export default function DashboardPage() {
         />
       )}
       
-      {/* UPDATE: Pastikan komponen <Sidebar> kamu mendukung activeTab 'kelola-donasi' */}
       <Sidebar 
         isOpen={isSidebarOpen} 
         setIsOpen={setIsSidebarOpen} 
@@ -132,11 +139,17 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs font-mono text-zinc-600 bg-zinc-50 border border-zinc-200/40 px-3 py-2 rounded-xl w-fit">
                   <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  <span>
+                    {mounted ? (
+                      new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                    ) : (
+                      "Memuat tanggal..."
+                    )}
+                  </span>
                 </div>
               </div>
 
-              {/* CARD RINGKASAN - SEKARANG ADA 3 CARD FUNGSIONAL */}
+              {/* CARD RINGKASAN */}
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                 <div className="bg-white border border-zinc-200/60 p-5 rounded-2xl relative overflow-hidden group">
                   <div className="flex justify-between items-start">
@@ -174,7 +187,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* UPDATE CARD 3: BERUBAH DARI ENGINE STATUS MENJADI RINGKASAN SALDO KAS */}
                 <div className="bg-white border border-zinc-200/60 p-5 rounded-2xl relative overflow-hidden group">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
@@ -221,7 +233,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* UPDATE LOG KANAN: MENAMPILKAN ARUS MASUK KAS TERBARU */}
                 <div className="bg-white border border-zinc-200/60 rounded-2xl p-5 space-y-4">
                   <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
                     <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
@@ -235,8 +246,8 @@ export default function DashboardPage() {
                     ) : mutations.length === 0 ? (
                       <p className="text-xs text-zinc-400 py-4">Belum ada riwayat transaksi masuk.</p>
                     ) : (
-                      mutations.slice(0, 4).map((mutation: any) => (
-                        <div key={mutation.id} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2">
+                      mutations.slice(0, 4).map((mutation: any, idx: number) => (
+                        <div key={mutation.id || idx} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2">
                           <div className="truncate max-w-[150px]">
                             <p className="text-xs font-medium text-zinc-800 truncate">
                               {mutation.type === "IN" ? (mutation.donor_name || "Anonim") : mutation.notes}
@@ -267,7 +278,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* TAB BARU: KELOLA DONASI */}
           {activeTab === "kelola-donasi" && (
             <div className="bg-white border border-zinc-200/60 p-6 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.01)]">
               <AdminDonations mutations={mutations} onAddExpense={handleAddExpense} />

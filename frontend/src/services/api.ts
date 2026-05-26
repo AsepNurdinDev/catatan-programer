@@ -254,29 +254,44 @@ export async function getDonationStats() {
   }
 }
 
-// Jalur penarikan semua mutasi finansial (Uang Masuk dari Midtrans Webhook + Uang Keluar Manual)
+// Jalur penarikan semua mutasi finansial (Uang Masuk & Keluar)
 export async function getDonations() {
+  const baseUrl = getBaseUrl(); // 🛠️ PERBAIKAN UTAMA: Menggunakan fungsi pendeteksi URL dinamis
   const token = localStorage.getItem("admin_token");
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/donations`, {
+  
+  const res = await fetch(`${baseUrl}/admin/donations`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     }
   });
+
+  if (!res.ok) {
+    console.error(`Error fetching donations: status ${res.status}`);
+    return [];
+  }
+
   return res.json();
 }
 
 // Jalur pengiriman pencatatan dana keluar ke database backend
-export async function createExpense(amount: number, notes: string) {
+export async function createExpense(amount: number, notes: string, category: string) {
+  const baseUrl = getBaseUrl(); // 🛠️ PERBAIKAN UTAMA: Menggunakan fungsi pendeteksi URL dinamis
   const token = localStorage.getItem("admin_token");
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/expenses`, {
+  
+  const res = await fetch(`${baseUrl}/admin/expenses`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify({ amount, notes })
+    body: JSON.stringify({ amount, notes, category })
   });
+
+  if (!res.ok) {
+    throw new Error(`Error creating expense: status ${res.status}`);
+  }
+
   return res.json();
 }

@@ -185,3 +185,45 @@ func GetAdminDonationDashboard(c *gin.Context) {
 		"total_failed":   countFailed,
 	})
 }
+
+type ExpenseInput struct {
+	Amount float64 `json:"amount" binding:"required,gt=0"`
+	Notes  string  `json:"notes" binding:"required"`
+}
+
+// CreateExpenseHandler mencatat pengeluaran uang kas/donasi
+func CreateExpenseHandler(c *gin.Context) {
+	var input ExpenseInput
+
+	// 1. Validasi input JSON dari frontend
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Input tidak valid: " + err.Error(),
+		})
+		return
+	}
+
+	// 2. TODO: Simpan data pengeluaran ke database kamu
+	// Contoh logika kasar (sesuaikan dengan setup ORM/DB Gorm kamu):
+	// expense := models.Expense{
+	//     Amount:    input.Amount,
+	//     Notes:     input.Notes,
+	//     CreatedAt: time.Now(),
+	// }
+	// if err := db.Create(&expense).Error; err != nil {
+	//     c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menyimpan data"})
+	//     return
+	// }
+
+	// 3. Kembalikan response sukses berformat JSON standar
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Pengeluaran berhasil dicatat",
+		"data": gin.H{
+			"amount":     input.Amount,
+			"notes":      input.Notes,
+			"created_at": time.Now().Format(time.RFC3339),
+		},
+	})
+}
