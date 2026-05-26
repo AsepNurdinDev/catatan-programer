@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import Script from "next/script"
 import "./globals.css"
 import { Toaster } from "sonner"
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   title: "Catatan Programmer",
   description: "Personal tech blog by Asepshan",
   icons: {
-    icon: "/favicon.png",      
+    icon: "/favicon.png",
   },
 }
 
@@ -32,13 +33,23 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col">
-          {children}
-          <Toaster
-            position="top-right"
-            richColors
-            closeButton
-          />
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col"
+      >
+        <Script
+          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+          strategy="afterInteractive"
+        />
+
+        {children}
+
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+        />
       </body>
     </html>
   )

@@ -211,3 +211,45 @@ export async function deleteProject(id: string | number) {
 
   return res.json()
 }
+
+// 1. Fungsi memicu pembuatan transaksi ke backend Go
+export async function initiateDonation(
+  projectId: number,
+  amount: number,
+  donorName: string
+) {
+  try {
+    const response = await fetch(`${getBaseUrl()}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project_id: projectId,
+        amount: amount,
+        donor_name: donorName,
+      }),
+    })
+
+    return await response.json()
+  } catch (error) {
+    console.error("Gagal menginisiasi donasi:", error)
+    return { error: "Terjadi kesalahan koneksi" }
+  }
+}
+
+// 2. Fungsi mengambil data statistik transparansi untuk halaman user
+export async function getDonationStats() {
+  try {
+    const response = await fetch(
+      `${getBaseUrl()}/api/donations/stats`
+    )
+
+    return await response.json()
+  } catch (error) {
+    console.error("Gagal mengambil data statistik donasi:", error)
+
+    return {
+      total_donation: 0,
+      recent_donors: [],
+    }
+  }
+}

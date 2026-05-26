@@ -29,6 +29,14 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/projects", controllers.FindProjects)
 	router.GET("/projects/:slug", controllers.FindProjectBySlug)
 
+	// public donation
+	publicAPI := router.Group("/api")
+	{
+		publicAPI.POST("/donations", controllers.InitiateDonation)
+		publicAPI.POST("/donations/webhook", controllers.HandleMidtransWebhook)
+		publicAPI.GET("/donations/stats", controllers.GetDonationStats)
+	}
+
 	// admin group
 	admin := router.Group("/admin")
 	admin.Use(middlewares.AuthMiddleware())
@@ -43,5 +51,9 @@ func SetupRoutes(router *gin.Engine) {
 		admin.POST("/projects", controllers.StoreProject)
 		admin.PUT("/projects/:id", controllers.UpdateProject)
 		admin.DELETE("/projects/:id", controllers.DeleteProject)
+
+		// detail donation
+		admin.GET("/donations/dashboard", controllers.GetAdminDonationDashboard)
 	}
 }
+

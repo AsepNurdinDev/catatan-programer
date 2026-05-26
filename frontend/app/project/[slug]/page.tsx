@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getProjects } from "@/src/services/api";
+import { getProjects, initiateDonation } from "@/src/services/api";
 import {
   ArrowLeft,
   Code2,
@@ -10,8 +10,16 @@ import {
   Download,
   FolderGit2,
   Heart,
+  DollarSign,
+  X,
 } from "lucide-react";
 import Link from "next/link";
+
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -19,14 +27,17 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // State untuk kontrol Pop-up Gate Donasi QRIS
-  const [donationModal, setDonationModal] = useState<{
+  // State Kontrol Alur Donasi Midtrans
+  const [donationGate, setDonationGate] = useState<{
     isOpen: boolean;
     targetUrl: string;
   }>({
     isOpen: false,
     targetUrl: "",
   });
+  const [donorName, setDonorName] = useState("");
+  const [amount, setAmount] = useState(10000); // Default Rp 10.000
+  const [isProcessingPay, setIsProcessingPay] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -86,14 +97,56 @@ export default function ProjectDetailPage() {
       ? `${project.github_url}/archive/refs/heads/main.zip`
       : "#";
 
+  // Memicu pembukaan modal input donasi internal
   const handleProtectedAction = (url: string) => {
     if (!url || url === "#") return;
-    setDonationModal({ isOpen: true, targetUrl: url });
+    setDonationGate({ isOpen: true, targetUrl: url });
   };
 
-  const proceedToTarget = () => {
-    const url = donationModal.targetUrl;
-    setDonationModal({ isOpen: false, targetUrl: "" });
+  // Eksekusi Panggil Token Go Backend & Pemicu Pop-up Midtrans Snap
+  const handlePayDonation = async () => {
+    if (amount < 1000) {
+      alert("Minimal donasi adalah Rp 1.000");
+      return;
+    }
+
+    setIsProcessingPay(true);
+    const projectId = project.id || project.Id;
+    
+    const res = await initiateDonation(projectId, amount, donorName);
+    setIsProcessingPay(false);
+
+    if (res && res.snap_token) {
+      const destinationUrl = donationGate.targetUrl;
+      setDonationGate({ isOpen: false, targetUrl: "" }); // Tutup modal input
+
+      // Panggil widget pop-up Midtrans Snap asli
+      window.snap.pay(res.snap_token, {
+        onSuccess: function (result: any) {
+          window.open(destinationUrl, "_blank", "noopener,noreferrer");
+        },
+        onPending: function (result: any) {
+          alert("Menunggu penyelesaian pembayaran QRIS Anda.");
+        },
+        onError: function (result: any) {
+          alert("Pembayaran gagal diproses.");
+        },
+        onClose: function () {
+          // Jika ditutup, tawarkan langsung bypass menuju link unduh/repo
+          if (confirm("Ingin langsung melanjutkan akses repositori tanpa donasi?")) {
+            window.open(destinationUrl, "_blank", "noopener,noreferrer");
+          }
+        },
+      });
+    } else {
+      alert(res.error || "Gagal menginisiasi tagihan pembayaran ke backend.");
+    }
+  };
+
+  // Fitur bypass langsung tanpa donasi jika diinginkan user
+  const handleBypassDonation = () => {
+    const url = donationGate.targetUrl;
+    setDonationGate({ isOpen: false, targetUrl: "" });
     if (url) {
       window.open(url, "_blank", "noopener,noreferrer");
     }
@@ -101,10 +154,7 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50/30 text-zinc-800 font-sans antialiased flex flex-col justify-between">
-      
-      {/* MAIN CONTAINER LAYOUT */}
       <div className="w-full flex-grow">
-        {/* HEADER NAVBAR FIXED */}
         <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-zinc-100">
           <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
             <div>
@@ -118,10 +168,7 @@ export default function ProjectDetailPage() {
           </div>
         </header>
 
-        {/* CONTEN WRAPPER: Diperpendek pt-nya agar merapat ke bawah Navbar */}
         <div className="max-w-2xl mx-auto px-5 pt-24 pb-16">
-          
-          {/* NAV TOMBOL KEMBALI (Sudah presisi jarak tingginya) */}
           <nav className="mb-6">
             <Link
               href="/project"
@@ -131,7 +178,6 @@ export default function ProjectDetailPage() {
             </Link>
           </nav>
 
-          {/* COVER GAMBAR PROYEK: Menjaga proporsi tanpa crop & auto height */}
           <div className="w-full bg-white rounded-xl overflow-hidden border border-zinc-200/60 shadow-[0_3px_10px_rgba(0,0,0,0.01)] mb-8 flex items-center justify-center p-2 sm:p-4">
             {project.image ? (
               <img
@@ -146,7 +192,6 @@ export default function ProjectDetailPage() {
             )}
           </div>
 
-          {/* HEADLINE & TAGS */}
           <div className="space-y-3.5 border-b border-zinc-100 pb-6">
             <div className="flex flex-wrap gap-1.5 items-center">
               <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded bg-zinc-950 text-white uppercase tracking-wider">
@@ -167,7 +212,6 @@ export default function ProjectDetailPage() {
             </h1>
           </div>
 
-          {/* DESKRIPSI & DOKUMENTASI (Sangat nyaman dibaca) */}
           <div className="py-6 space-y-5 text-zinc-600 text-sm sm:text-[15px] leading-relaxed tracking-normal border-b border-zinc-100">
             <p className="font-normal text-zinc-900 leading-relaxed">
               {project.description}
@@ -180,7 +224,6 @@ export default function ProjectDetailPage() {
             )}
           </div>
 
-          {/* PANEL TOMBOL LINK RESUSABLE */}
           <div className="bg-white border border-zinc-200/60 p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.01)] grid grid-cols-1 sm:grid-cols-3 gap-2 mt-8">
             <button
               onClick={() => handleProtectedAction(project.github_url)}
@@ -209,11 +252,9 @@ export default function ProjectDetailPage() {
               <Download className="w-3.5 h-3.5" /> Download ZIP
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* FOOTER DI BAGIAN DASAR HALAMAN */}
       <footer className="bg-white border-t border-zinc-100 py-6 text-xs font-sans text-zinc-400 w-full">
         <div className="max-w-2xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>© {new Date().getFullYear()} The Journal. All rights reserved.</p>
@@ -224,52 +265,78 @@ export default function ProjectDetailPage() {
         </div>
       </footer>
 
-      {/* ================= POP-UP GATE QRIS DONASI (MODAL OVERLAY) ================= */}
-      {donationModal.isOpen && (
+      {/* ================= MODAL INTERFACES INPUT PARAMETER DONASI ================= */}
+      {donationGate.isOpen && (
         <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-xs w-full border border-zinc-200 p-5 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 bg-rose-50 border border-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto shadow-sm">
+          <div className="bg-white rounded-2xl max-w-sm w-full border border-zinc-200 p-6 shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-150">
+            <button
+              onClick={() => setDonationGate({ isOpen: false, targetUrl: "" })}
+              className="absolute top-4 right-4 p-1 rounded-lg text-zinc-400 hover:bg-zinc-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-10 h-10 bg-rose-50 border border-rose-100 text-rose-500 rounded-xl flex items-center justify-center shadow-sm">
               <Heart className="w-4 h-4 fill-rose-500" />
             </div>
 
-            <div className="space-y-0.5">
-              <h3 className="text-sm font-semibold text-zinc-900">
-                Dukung Kreator Portofolio
-              </h3>
-              <p className="text-[11px] text-zinc-400 leading-relaxed px-1">
-                Donasi seikhlasnya untuk mendukung pengembangan sistem open-source ini.
-              </p>
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-950">Dukung Kreator Proyek</h3>
+              <p className="text-xs text-zinc-500">Donasi sukarela untuk membantu pengelolaan operasional server portofolio ini.</p>
             </div>
 
-            <div className="bg-zinc-50 border border-zinc-200/60 p-3 rounded-xl max-w-[160px] mx-auto">
-              <img
-                src="/images/qris.jpg"
-                alt="QRIS Code Donasi"
-                className="w-full h-auto aspect-square object-contain mix-blend-multiply"
-              />
-              <span className="text-[9px] font-mono text-zinc-400 tracking-wider uppercase block mt-1.5">
-                SCAN QRIS CODE
-              </span>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-zinc-500 mb-1 font-medium">Nama Donatur (Opsional)</label>
+                <input
+                  type="text"
+                  placeholder="Hamba Allah / Anonim"
+                  value={donorName}
+                  onChange={(e) => setDonorName(e.target.value)}
+                  className="w-full p-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:border-zinc-950 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-500 mb-1 font-medium">Nominal Dukungan (Rupiah)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-mono text-xs">Rp</span>
+                  <input
+                    type="number"
+                    min={1000}
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                    className="w-full pl-9 pr-3 p-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:border-zinc-950 focus:bg-white transition-all font-mono"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5 pt-1">
               <button
-                onClick={proceedToTarget}
-                className="w-full py-2 bg-zinc-950 text-white rounded-lg text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm"
+                onClick={handlePayDonation}
+                disabled={isProcessingPay}
+                className="w-full py-2.5 bg-zinc-950 text-white rounded-xl text-xs font-semibold hover:bg-zinc-900 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Sudah Scan / Lanjutkan Unduh
+                {isProcessingPay ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Menyiapkan Transaksi...
+                  </>
+                ) : (
+                  "Lanjut Pembayaran via QRIS"
+                )}
               </button>
               <button
-                onClick={() => setDonationModal({ isOpen: false, targetUrl: "" })}
-                className="w-full py-1.5 text-zinc-400 hover:text-zinc-800 rounded-lg text-[11px] font-medium transition-colors"
+                onClick={handleBypassDonation}
+                className="w-full py-2 text-zinc-400 hover:text-zinc-800 rounded-xl text-xs font-medium transition-colors"
               >
-                Lewati Donasi
+                Lewati & Langsung Buka Link
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

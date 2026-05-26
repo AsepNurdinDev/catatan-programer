@@ -41,6 +41,9 @@ func main() {
 	// database
 	config.ConnectDatabase()
 
+	// midtrans
+	config.InitMidtrans()
+
 	// seeder
 	seeders.SeedAdmin()
 

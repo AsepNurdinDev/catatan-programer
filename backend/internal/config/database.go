@@ -16,26 +16,26 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
-    err := godotenv.Load()
-    if err != nil {
-        log.Println("Peringatan: File .env fisik tidak ditemukan, membaca environment langsung dari sistem container/Docker.")
-    }
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Peringatan: File .env fisik tidak ditemukan, membaca environment langsung dari sistem container/Docker.")
+	}
 
-    dbUser := os.Getenv("DB_USER")
-    dbPass := os.Getenv("DB_PASS")
-    dbHost := os.Getenv("DB_HOST")
-    dbPort := os.Getenv("DB_PORT")
-    dbName := os.Getenv("DB_NAME")
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
 
-    // format dsn mysql
-    dsn := fmt.Sprintf(
-        "%s:%s@tcp(%s:%s)/%s?parseTime=true",
-        dbUser,
-        dbPass,
-        dbHost,
-        dbPort,
-        dbName,
-    )
+	// format dsn mysql
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		dbUser,
+		dbPass,
+		dbHost,
+		dbPort,
+		dbName,
+	)
 
 	// koneksi database
 	database, err := gorm.Open(
@@ -52,6 +52,7 @@ func ConnectDatabase() {
 		&models.Post{},
 		&models.User{},
 		&models.Project{},
+		&models.Donation{},
 	)
 
 	DB = database
