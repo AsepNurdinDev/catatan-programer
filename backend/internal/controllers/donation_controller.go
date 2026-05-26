@@ -40,9 +40,6 @@ func InitiateDonation(c *gin.Context) {
 			OrderID:  orderID,
 			GrossAmt: input.Amount,
 		},
-		EnabledPayments: []snap.SnapPaymentType{
-			snap.SnapPaymentType("qris"),
-		},
 		CustomerDetail: &midtrans.CustomerDetails{
 			FName: input.DonorName,
 		},

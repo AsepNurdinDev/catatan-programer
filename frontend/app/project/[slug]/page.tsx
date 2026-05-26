@@ -122,8 +122,8 @@ export default function ProjectDetailPage() {
 
       // Panggil widget pop-up Midtrans Snap asli
       window.snap.pay(res.snap_token, {
-        onSuccess: function (result: any) {
-          window.open(destinationUrl, "_blank", "noopener,noreferrer");
+        onSuccess: function () {
+          window.location.href = destinationUrl;
         },
         onPending: function (result: any) {
           alert("Menunggu penyelesaian pembayaran QRIS Anda.");
@@ -133,9 +133,9 @@ export default function ProjectDetailPage() {
         },
         onClose: function () {
           // Jika ditutup, tawarkan langsung bypass menuju link unduh/repo
-          if (confirm("Ingin langsung melanjutkan akses repositori tanpa donasi?")) {
-            window.open(destinationUrl, "_blank", "noopener,noreferrer");
-          }
+if (confirm("Ingin langsung melanjutkan akses repositori tanpa donasi?")) {
+  window.location.href = destinationUrl;
+}
         },
       });
     } else {
@@ -148,7 +148,7 @@ export default function ProjectDetailPage() {
     const url = donationGate.targetUrl;
     setDonationGate({ isOpen: false, targetUrl: "" });
     if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.location.href = url;
     }
   };
 
