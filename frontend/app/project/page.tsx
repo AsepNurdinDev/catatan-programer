@@ -1,10 +1,21 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import Link from "next/link" 
-import { getProjects, initiateDonation } from "@/src/services/api"
-import { FolderGit2, Code2, ExternalLink, Eye, Download, Heart, ChevronLeft, ChevronRight, X } from "lucide-react"
-import Navbar from "../components/Navbar"
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { getProjects, initiateDonation } from "@/src/services/api";
+import {
+  FolderGit2,
+  Code2,
+  ExternalLink,
+  Eye,
+  Download,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  AlertCircle,
+} from "lucide-react";
+import Navbar from "../components/Navbar";
 
 declare global {
   interface Window {
@@ -13,99 +24,115 @@ declare global {
 }
 
 export default function PublicProjectPage() {
-  const [projects, setProjects] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 9
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   // State Kontrol Alur Donasi Midtrans
-  const [donationGate, setDonationGate] = useState<{ isOpen: boolean; targetUrl: string; activeProjectId: number | null }>({
+  const [donationGate, setDonationGate] = useState<{
+    isOpen: boolean;
+    targetUrl: string;
+    activeProjectId: number | null;
+  }>({
     isOpen: false,
     targetUrl: "",
-    activeProjectId: null
-  })
-  const [donorName, setDonorName] = useState("")
-  const [amount, setAmount] = useState(10000)
-  const [isProcessingPay, setIsProcessingPay] = useState(false)
+    activeProjectId: null,
+  });
+  const [donorName, setDonorName] = useState("");
+  const [amount, setAmount] = useState(10000);
+  const [isProcessingPay, setIsProcessingPay] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  // State untuk Custom Alert di dalam Modal (Menghindari alert browser)
+  const [customAlert, setCustomAlert] = useState<{
+    type: "error" | "info" | null;
+    message: string;
+  }>({ type: null, message: "" });
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     async function fetchPublicProjects() {
       try {
-        const data = await getProjects()
+        const data = await getProjects();
         if (Array.isArray(data)) {
-          setProjects(data)
+          setProjects(data);
         }
       } catch (error) {
-        console.error("Gagal memuat data project untuk publik:", error)
+        console.error("Gagal memuat data project untuk publik:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    fetchPublicProjects()
-  }, [])
+    fetchPublicProjects();
+  }, []);
 
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentProjects = projects.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(projects.length / itemsPerPage)
+  const currentProjects = projects.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(projects.length / itemsPerPage);
 
   const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber)
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleProtectedAction = (id: number, url: string) => {
-    if (!url || url === "#") return
-    setDonationGate({ isOpen: true, targetUrl: url, activeProjectId: id })
-  }
+    if (!url || url === "#") return;
+    setCustomAlert({ type: null, message: "" }); // Reset alert setiap modal dibuka
+    setDonationGate({ isOpen: true, targetUrl: url, activeProjectId: id });
+  };
 
   const handlePayDonation = async () => {
     if (amount < 1000) {
-      alert("Minimal donasi adalah Rp 1.000")
-      return
+      setCustomAlert({ type: "error", message: "Minimal donasi adalah Rp 1.000" });
+      return;
     }
 
-    if (!donationGate.activeProjectId) return
+    if (!donationGate.activeProjectId) return;
 
-    setIsProcessingPay(true)
-    const res = await initiateDonation(donationGate.activeProjectId, amount, donorName)
-    setIsProcessingPay(false)
+    setIsProcessingPay(true);
+    setCustomAlert({ type: null, message: "" });
+    const res = await initiateDonation(donationGate.activeProjectId, amount, donorName);
+    setIsProcessingPay(false);
 
     if (res && res.snap_token) {
-      const destinationUrl = donationGate.targetUrl
-      setDonationGate({ isOpen: false, targetUrl: "", activeProjectId: null }) // Tutup modal input
+      const destinationUrl = donationGate.targetUrl;
+      const currentId = donationGate.activeProjectId;
+      setDonationGate({ isOpen: false, targetUrl: "", activeProjectId: null }); // Tutup sementara modal input
 
       window.snap.pay(res.snap_token, {
-        onSuccess: function (result: any) {
-          window.open(destinationUrl, "_blank", "noopener,noreferrer")
+        onSuccess: function () {
+          // Sukses -> Langsung alihkan ke link tujuan (buka di tab yang sama agar lancar/instan)
+          window.location.href = destinationUrl;
         },
-        onPending: function (result: any) {
-          alert("Selesaikan pembayaran QRIS Anda.")
+        onPending: function () {
+          setDonationGate({ isOpen: true, targetUrl: destinationUrl, activeProjectId: currentId });
+          setCustomAlert({ type: "info", message: "Menunggu penyelesaian pembayaran QRIS Anda di aplikasi." });
         },
-        onError: function (result: any) {
-          alert("Pembayaran bermasalah, silakan coba kembali.")
+        onError: function () {
+          setDonationGate({ isOpen: true, targetUrl: destinationUrl, activeProjectId: currentId });
+          setCustomAlert({ type: "error", message: "Pembayaran bermasalah atau gagal diproses." });
         },
         onClose: function () {
-          if (confirm("Lanjutkan membuka link tanpa menyelesaikan donasi?")) {
-            window.open(destinationUrl, "_blank", "noopener,noreferrer")
-          }
+          // Sifatnya opsional, jika ditutup berikan opsi bypass lewat tombol gratis yang stand-by di modal
+          setDonationGate({ isOpen: true, targetUrl: destinationUrl, activeProjectId: currentId });
+          setCustomAlert({ type: "info", message: "Jendela pembayaran ditutup. Anda tetap bisa mengakses file secara gratis melalui tombol di bawah." });
         }
-      })
+      });
     } else {
-      alert(res.error || "Gagal menghubungi modul pembayaran backend.")
+      setCustomAlert({ type: "error", message: res.error || "Gagal menghubungi modul pembayaran backend." });
     }
-  }
+  };
 
   const handleBypassDonation = () => {
-    const url = donationGate.targetUrl
-    setDonationGate({ isOpen: false, targetUrl: "", activeProjectId: null })
+    const url = donationGate.targetUrl;
+    setDonationGate({ isOpen: false, targetUrl: "", activeProjectId: null });
     if (url) {
-      window.open(url, "_blank", "noopener,noreferrer")
+      window.location.href = url;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-50/30 text-zinc-800 antialiased selection:bg-zinc-100 flex flex-col justify-between relative">
@@ -317,6 +344,18 @@ export default function PublicProjectPage() {
               <p className="text-xs text-zinc-500">Donasi Anda membantu membiayai operasional server dan pengembangan kode bersifat open-source.</p>
             </div>
 
+            {/* CUSTOM UI NOTIFICATION REPLACEMENT FOR BROWSER ALERTS */}
+            {customAlert.type && (
+              <div className={`p-3 rounded-xl flex items-start gap-2.5 text-xs font-medium animate-in fade-in duration-200 ${
+                customAlert.type === "error" 
+                  ? "bg-rose-50 border border-rose-100 text-rose-600" 
+                  : "bg-amber-50 border border-amber-100 text-amber-700"
+              }`}>
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{customAlert.message}</span>
+              </div>
+            )}
+
             <div className="space-y-3 text-xs">
               <div>
                 <label className="block text-zinc-500 mb-1 font-medium">Nama Donatur (Opsional)</label>
@@ -359,11 +398,12 @@ export default function PublicProjectPage() {
                   "Lanjut Pembayaran via QRIS"
                 )}
               </button>
+              
               <button
                 onClick={handleBypassDonation}
-                className="w-full py-2 text-zinc-400 hover:text-zinc-800 rounded-xl text-xs font-medium transition-colors"
+                className="w-full py-2 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 border border-transparent hover:border-zinc-100 rounded-xl text-xs font-medium transition-all text-center"
               >
-                Lewati & Langsung Buka Link
+                Lewati & Langsung Buka Link (Gratis)
               </button>
             </div>
           </div>
@@ -371,5 +411,5 @@ export default function PublicProjectPage() {
       )}
 
     </div>
-  )
+  );
 }

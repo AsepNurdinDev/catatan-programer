@@ -2,18 +2,20 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FolderGit2, BookOpen, LayoutDashboard, PlusCircle, FileCode, LogOut, ChevronLeft } from "lucide-react"
+import { FolderGit2, BookOpen, LayoutDashboard, PlusCircle, FileCode, LogOut, ChevronLeft, Coins } from "lucide-react"
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  activeTab: "overview" | "kelola-posts" | "kelola-projects";
-  setActiveTab: (tab: "overview" | "kelola-posts" | "kelola-projects") => void;
+  // UPDATE: Tambahkan tipe "kelola-donasi" ke union type activeTab
+  activeTab: "overview" | "kelola-posts" | "kelola-projects" | "kelola-donasi";
+  setActiveTab: (tab: "overview" | "kelola-posts" | "kelola-projects" | "kelola-donasi") => void;
   onLogout: () => void;
 }
 
 export default function Sidebar({ isOpen, setIsOpen, activeTab, setActiveTab, onLogout }: SidebarProps) {
-  const handleNavClick = (tab: "overview" | "kelola-posts" | "kelola-projects") => {
+  // UPDATE: Perluas parameter fungsi handleNavClick
+  const handleNavClick = (tab: "overview" | "kelola-posts" | "kelola-projects" | "kelola-donasi") => {
     setActiveTab(tab)
     if (window.innerWidth < 1024) setIsOpen(false)
   }
@@ -68,6 +70,15 @@ export default function Sidebar({ isOpen, setIsOpen, activeTab, setActiveTab, on
           >
             <FolderGit2 className="w-4 h-4 shrink-0" />
             <span className={!isOpen ? "lg:hidden" : "block"}>KELOLA PROJECTS</span>
+          </button>
+
+          {/* TAMBAHAN MENU BARU: MANAJEMEN DONASI & KAS */}
+          <button 
+            onClick={() => handleNavClick("kelola-donasi")}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold font-mono tracking-wide transition-all text-left ${activeTab === "kelola-donasi" ? "bg-zinc-950 text-white shadow-sm" : "text-zinc-500 hover:bg-zinc-100/80 hover:text-zinc-900"}`}
+          >
+            <Coins className="w-4 h-4 shrink-0" />
+            <span className={!isOpen ? "lg:hidden" : "block"}>MANAJEMEN KAS</span>
           </button>
 
           <div className="my-4 border-t border-zinc-100" />

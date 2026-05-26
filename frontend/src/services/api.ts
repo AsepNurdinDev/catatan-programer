@@ -253,3 +253,30 @@ export async function getDonationStats() {
     }
   }
 }
+
+// Jalur penarikan semua mutasi finansial (Uang Masuk dari Midtrans Webhook + Uang Keluar Manual)
+export async function getDonations() {
+  const token = localStorage.getItem("admin_token");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/donations`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  return res.json();
+}
+
+// Jalur pengiriman pencatatan dana keluar ke database backend
+export async function createExpense(amount: number, notes: string) {
+  const token = localStorage.getItem("admin_token");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/expenses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ amount, notes })
+  });
+  return res.json();
+}

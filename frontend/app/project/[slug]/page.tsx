@@ -10,8 +10,8 @@ import {
   Download,
   FolderGit2,
   Heart,
-  DollarSign,
   X,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -38,6 +38,12 @@ export default function ProjectDetailPage() {
   const [donorName, setDonorName] = useState("");
   const [amount, setAmount] = useState(10000); // Default Rp 10.000
   const [isProcessingPay, setIsProcessingPay] = useState(false);
+
+  // State untuk Custom Alert di dalam Modal (Menghindari alert browser)
+  const [customAlert, setCustomAlert] = useState<{
+    type: "error" | "info" | null;
+    message: string;
+  }>({ type: null, message: "" });
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -97,20 +103,20 @@ export default function ProjectDetailPage() {
       ? `${project.github_url}/archive/refs/heads/main.zip`
       : "#";
 
-  // Memicu pembukaan modal input donasi internal
   const handleProtectedAction = (url: string) => {
     if (!url || url === "#") return;
+    setCustomAlert({ type: null, message: "" }); // Reset alert setiap modal dibuka
     setDonationGate({ isOpen: true, targetUrl: url });
   };
 
-  // Eksekusi Panggil Token Go Backend & Pemicu Pop-up Midtrans Snap
   const handlePayDonation = async () => {
     if (amount < 1000) {
-      alert("Minimal donasi adalah Rp 1.000");
+      setCustomAlert({ type: "error", message: "Minimal donasi adalah Rp 1.000" });
       return;
     }
 
     setIsProcessingPay(true);
+    setCustomAlert({ type: null, message: "" });
     const projectId = project.id || project.Id;
     
     const res = await initiateDonation(projectId, amount, donorName);
@@ -118,32 +124,35 @@ export default function ProjectDetailPage() {
 
     if (res && res.snap_token) {
       const destinationUrl = donationGate.targetUrl;
-      setDonationGate({ isOpen: false, targetUrl: "" }); // Tutup modal input
+      setDonationGate({ isOpen: false, targetUrl: "" }); // Langsung tutup modal internal
 
       // Panggil widget pop-up Midtrans Snap asli
       window.snap.pay(res.snap_token, {
         onSuccess: function () {
+          // Pembayaran sukses -> Langsung eksekusi download / redirect ke repo
           window.location.href = destinationUrl;
         },
-        onPending: function (result: any) {
-          alert("Menunggu penyelesaian pembayaran QRIS Anda.");
+        onPending: function () {
+          // Buka kembali modal dengan status info pending custom tanpa alert browser
+          setDonationGate({ isOpen: true, targetUrl: destinationUrl });
+          setCustomAlert({ type: "info", message: "Menunggu penyelesaian pembayaran QRIS Anda di aplikasi Midtrans." });
         },
-        onError: function (result: any) {
-          alert("Pembayaran gagal diproses.");
+        onError: function () {
+          setDonationGate({ isOpen: true, targetUrl: destinationUrl });
+          setCustomAlert({ type: "error", message: "Pembayaran gagal diproses oleh sistem gateway." });
         },
         onClose: function () {
-          // Jika ditutup, tawarkan langsung bypass menuju link unduh/repo
-if (confirm("Ingin langsung melanjutkan akses repositori tanpa donasi?")) {
-  window.location.href = destinationUrl;
-}
+          // Karena sifatnya tidak memaksa (opsional), jika user menutup snap window, 
+          // mereka bisa langsung memutuskan lewat tombol lewati di modal utama yang tetap siaga.
+          setDonationGate({ isOpen: true, targetUrl: destinationUrl });
+          setCustomAlert({ type: "info", message: "Anda menutup jendela pembayaran. Anda tetap bisa mengunduh file secara gratis melalui tombol di bawah." });
         },
       });
     } else {
-      alert(res.error || "Gagal menginisiasi tagihan pembayaran ke backend.");
+      setCustomAlert({ type: "error", message: res.error || "Gagal menginisiasi tagihan pembayaran ke backend." });
     }
   };
 
-  // Fitur bypass langsung tanpa donasi jika diinginkan user
   const handleBypassDonation = () => {
     const url = donationGate.targetUrl;
     setDonationGate({ isOpen: false, targetUrl: "" });
@@ -285,6 +294,18 @@ if (confirm("Ingin langsung melanjutkan akses repositori tanpa donasi?")) {
               <p className="text-xs text-zinc-500">Donasi sukarela untuk membantu pengelolaan operasional server portofolio ini.</p>
             </div>
 
+            {/* CUSTOM UI NOTIFICATION REPLACEMENT FOR BROWSER ALERTS */}
+            {customAlert.type && (
+              <div className={`p-3 rounded-xl flex items-start gap-2.5 text-xs font-medium animate-in fade-in duration-200 ${
+                customAlert.type === "error" 
+                  ? "bg-rose-50 border border-rose-100 text-rose-600" 
+                  : "bg-amber-50 border border-amber-100 text-amber-700"
+              }`}>
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{customAlert.message}</span>
+              </div>
+            )}
+
             <div className="space-y-3 text-xs">
               <div>
                 <label className="block text-zinc-500 mb-1 font-medium">Nama Donatur (Opsional)</label>
@@ -327,11 +348,12 @@ if (confirm("Ingin langsung melanjutkan akses repositori tanpa donasi?")) {
                   "Lanjut Pembayaran via QRIS"
                 )}
               </button>
+              
               <button
                 onClick={handleBypassDonation}
-                className="w-full py-2 text-zinc-400 hover:text-zinc-800 rounded-xl text-xs font-medium transition-colors"
+                className="w-full py-2 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 border border-transparent hover:border-zinc-100 rounded-xl text-xs font-medium transition-all text-center"
               >
-                Lewati & Langsung Buka Link
+                Lewati & Langsung Ambil File (Gratis)
               </button>
             </div>
           </div>
