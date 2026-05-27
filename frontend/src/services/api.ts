@@ -256,9 +256,14 @@ export async function getDonationStats() {
 
 // Jalur penarikan semua mutasi finansial (Uang Masuk & Keluar)
 export async function getDonations() {
-  const baseUrl = getBaseUrl(); // 🛠️ PERBAIKAN UTAMA: Menggunakan fungsi pendeteksi URL dinamis
+  const baseUrl = getBaseUrl();
   const token = localStorage.getItem("admin_token");
-  
+
+  // Tambahan: early return kalau belum login
+  if (!token) {
+    return { data: [], total_earnings: 0, total_used: 0, balance: 0 };
+  }
+
   const res = await fetch(`${baseUrl}/admin/donations`, {
     method: "GET",
     headers: {
@@ -269,7 +274,7 @@ export async function getDonations() {
 
   if (!res.ok) {
     console.error(`Error fetching donations: status ${res.status}`);
-    return [];
+    return { data: [], total_earnings: 0, total_used: 0, balance: 0 }; // FIX: return object, bukan []
   }
 
   return res.json();

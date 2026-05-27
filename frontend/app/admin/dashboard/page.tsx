@@ -5,21 +5,21 @@ import { useEffect, useState } from "react";
 import { getPosts, getProjects, getDonations, createExpense } from "@/src/services/api";
 import { BookOpen, FolderGit2, ArrowUpRight, Menu, Activity, Calendar, DollarSign } from "lucide-react";
 import AdminPosts from "@/app/admin/posts/page";
-import AdminProjects from "./AdminProjects"; 
+import AdminProjects from "./AdminProjects";
 import AdminDonations from "./AdminDonations";
 import Sidebar from "@/app/components/Sidebar";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [mounted, setMounted] = useState(false); // Solusi anti-hydration error untuk tanggal
+  const [mounted, setMounted] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [mutations, setMutations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "kelola-posts" | "kelola-projects" | "kelola-donasi">("overview");
+  const [expenseStatus, setExpenseStatus] = useState<"idle" | "success" | "error">("idle");
 
-  // Atur sidebar berdasarkan lebar layar
   useEffect(() => {
     setMounted(true);
     if (typeof window !== "undefined" && window.innerWidth >= 1024) {
@@ -32,13 +32,12 @@ export default function DashboardPage() {
       const [postsResponse, projectsResponse, donationsResponse] = await Promise.all([
         getPosts(),
         getProjects(),
-        getDonations() 
+        getDonations()
       ]);
 
       if (Array.isArray(postsResponse)) setPosts(postsResponse);
       if (Array.isArray(projectsResponse)) setProjects(projectsResponse);
-      
-      // Ambil array data dari response pembungkus jika format dari backend adalah { data: [...] }
+
       if (donationsResponse && Array.isArray(donationsResponse.data)) {
         setMutations(donationsResponse.data);
       } else if (Array.isArray(donationsResponse)) {
@@ -57,7 +56,6 @@ export default function DashboardPage() {
       router.push("/login");
       return;
     }
-
     fetchDashboardData();
   }, [router]);
 
@@ -66,46 +64,48 @@ export default function DashboardPage() {
     router.push("/login");
   }
 
-const handleAddExpense = async (amount: number, notes: string, category: string) => {
-  try {
-    // Pastikan service createExpense kamu di api.ts disesuaikan juga untuk menerima field category
-    await createExpense(amount, notes, category);
-    await fetchDashboardData(); 
-  } catch (error) {
-    console.error("Gagal mencatat pengeluaran:", error);
-  }
-};
+  const handleAddExpense = async (amount: number, notes: string, category: string) => {
+    try {
+      await createExpense(amount, notes, category);
+      await fetchDashboardData();
+      setExpenseStatus("success");
+      setTimeout(() => setExpenseStatus("idle"), 3000);
+    } catch (error) {
+      console.error("Gagal mencatat pengeluaran:", error);
+      setExpenseStatus("error");
+      setTimeout(() => setExpenseStatus("idle"), 3000);
+    }
+  };
 
-  // Kalkulasi total kas
-  const totalIn = mutations.filter(m => m.type === "IN").reduce((sum, m) => sum + m.amount, 0);
-  const totalOut = mutations.filter(m => m.type === "OUT").reduce((sum, m) => sum + m.amount, 0);
+  // FIX: pakai Number() agar tidak NaN kalau tipe data campur int64/float64
+  const totalIn = mutations.filter(m => m.type === "IN").reduce((sum, m) => sum + Number(m.amount), 0);
+  const totalOut = mutations.filter(m => m.type === "OUT").reduce((sum, m) => sum + Number(m.amount), 0);
   const currentBalance = totalIn - totalOut;
 
-  // Persentase kontribusi modul
   const totalItems = posts.length + projects.length;
   const postPercentage = totalItems > 0 ? Math.round((posts.length / totalItems) * 100) : 0;
   const projectPercentage = totalItems > 0 ? Math.round((projects.length / totalItems) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-zinc-50/50 text-zinc-900 antialiased flex font-sans relative overflow-x-hidden">
-      
+
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-zinc-900/10 backdrop-blur-sm z-20 lg:hidden transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-      
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        setIsOpen={setIsSidebarOpen} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onLogout={handleLogout} 
+
+      <Sidebar
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onLogout={handleLogout}
       />
 
       <div className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ease-in-out ${isSidebarOpen ? "lg:pl-64" : "lg:pl-20"}`}>
-        
+
         <header className="h-14 border-b border-zinc-200/60 bg-white/80 backdrop-blur-sm px-6 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors">
@@ -115,7 +115,7 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
               Workspace / {activeTab.replace("-", " ")}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-semibold text-zinc-900">Administrator</p>
@@ -128,10 +128,10 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-5xl w-full mx-auto">
-          
+
           {activeTab === "overview" && (
             <div className="space-y-8 animate-in fade-in duration-200">
-              
+
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-zinc-200/60 p-6 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.01)]">
                 <div className="space-y-0.5">
                   <h2 className="text-xl font-serif font-medium text-zinc-950 tracking-tight">Selamat Datang Kembali</h2>
@@ -140,11 +140,9 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
                 <div className="flex items-center gap-2 text-xs font-mono text-zinc-600 bg-zinc-50 border border-zinc-200/40 px-3 py-2 rounded-xl w-fit">
                   <Calendar className="w-3.5 h-3.5 text-zinc-400" />
                   <span>
-                    {mounted ? (
-                      new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-                    ) : (
-                      "Memuat tanggal..."
-                    )}
+                    {mounted
+                      ? new Date().toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+                      : "Memuat tanggal..."}
                   </span>
                 </div>
               </div>
@@ -168,7 +166,7 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="bg-white border border-zinc-200/60 p-5 rounded-2xl relative overflow-hidden group">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
@@ -191,8 +189,9 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Kas Operasional</span>
-                      <p className="text-xl font-serif font-semibold text-zinc-950 mt-1">
-                        Rp {loading ? "..." : currentBalance.toLocaleString("id-ID")}
+                      {/* FIX: warna dinamis kalau saldo negatif */}
+                      <p className={`text-xl font-serif font-semibold mt-1 ${currentBalance < 0 ? "text-rose-600" : "text-zinc-950"}`}>
+                        {loading ? "..." : `Rp ${currentBalance.toLocaleString("id-ID")}`}
                       </p>
                     </div>
                     <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-xl text-zinc-950">
@@ -200,7 +199,9 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
                     </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between text-[11px]">
-                    <span className="text-emerald-600 font-medium font-mono">Net Balance</span>
+                    <span className={`font-medium font-mono ${currentBalance < 0 ? "text-rose-500" : "text-emerald-600"}`}>
+                      {currentBalance < 0 ? "Defisit" : "Net Balance"}
+                    </span>
                     <button onClick={() => setActiveTab("kelola-donasi")} className="text-zinc-950 font-medium flex items-center gap-0.5 hover:underline">
                       Kelola Kas <ArrowUpRight className="w-3 h-3" />
                     </button>
@@ -254,7 +255,7 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
                             </p>
                           </div>
                           <span className={`text-[10px] font-mono font-semibold ${mutation.type === "IN" ? "text-emerald-600" : "text-rose-600"}`}>
-                            {mutation.type === "IN" ? "+" : "-"} Rp {mutation.amount.toLocaleString("id-ID")}
+                            {mutation.type === "IN" ? "+" : "-"} Rp {Number(mutation.amount).toLocaleString("id-ID")}
                           </span>
                         </div>
                       ))
@@ -280,6 +281,19 @@ const handleAddExpense = async (amount: number, notes: string, category: string)
 
           {activeTab === "kelola-donasi" && (
             <div className="bg-white border border-zinc-200/60 p-6 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.01)]">
+
+              {/* FIX: notifikasi status setelah tambah expense */}
+              {expenseStatus === "success" && (
+                <div className="mb-4 px-4 py-3 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs rounded-xl font-medium">
+                  ✓ Pengeluaran berhasil dicatat dan saldo diperbarui.
+                </div>
+              )}
+              {expenseStatus === "error" && (
+                <div className="mb-4 px-4 py-3 bg-rose-50 border border-rose-100 text-rose-700 text-xs rounded-xl font-medium">
+                  ✗ Gagal mencatat pengeluaran. Coba lagi.
+                </div>
+              )}
+
               <AdminDonations mutations={mutations} onAddExpense={handleAddExpense} />
             </div>
           )}

@@ -53,6 +53,7 @@ func ConnectDatabase() {
 		&models.User{},
 		&models.Project{},
 		&models.Donation{},
+		&models.Expense{},
 	)
 
 	DB = database

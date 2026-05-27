@@ -5,6 +5,7 @@ import (
 	"backend-api/internal/models"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -164,66 +165,111 @@ func GetDonationStats(c *gin.Context) {
 }
 
 // 2. GET /api/admin/donations/dashboard (Untuk Ringkasan Statistik di Dashboard Admin)
+// Struct gabungan untuk mutasi (IN & OUT)
+type MutationEntry struct {
+	ID           uint      `json:"id"`
+	Type         string    `json:"type"` // "IN" atau "OUT"
+	Amount       float64   `json:"amount"`
+	DonorName    string    `json:"donor_name,omitempty"`
+	ProjectTitle string    `json:"project_title,omitempty"`
+	Notes        string    `json:"notes"`
+	Category     string    `json:"category,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 func GetAdminDonationDashboard(c *gin.Context) {
-	var totalEarnings int64
-	var countSuccess int64
-	var countPending int64
-	var countFailed int64
+	var mutations []MutationEntry
 
-	// Hitung total uang masuk (SUCCESS)
-	config.DB.Model(&models.Donation{}).Where("status = ?", "SUCCESS").Select("COALESCE(SUM(amount), 0)").Row().Scan(&totalEarnings)
+	// Query donasi masuk (IN) yang SUCCESS
+	var donations []models.Donation
+	config.DB.Preload("Project").Where("status = ?", "SUCCESS").Order("created_at DESC").Find(&donations)
+	for _, d := range donations {
+		projectTitle := ""
+		if d.Project != nil {
+			projectTitle = d.Project.Title // sesuaikan dengan field di model Project kamu
+		}
+		mutations = append(mutations, MutationEntry{
+			ID:           d.ID,
+			Type:         "IN",
+			Amount:       float64(d.Amount),
+			DonorName:    d.DonorName,
+			ProjectTitle: projectTitle,
+			Notes:        "Donasi via QRIS Midtrans",
+			CreatedAt:    d.CreatedAt,
+		})
+	}
 
-	// Hitung jumlah baris/transaksi per status
-	config.DB.Model(&models.Donation{}).Where("status = ?", "SUCCESS").Count(&countSuccess)
-	config.DB.Model(&models.Donation{}).Where("status = ?", "PENDING").Count(&countPending)
-	config.DB.Model(&models.Donation{}).Where("status = ?", "FAILED").Count(&countFailed)
+	// Query pengeluaran (OUT)
+	var expenses []models.Expense
+	config.DB.Order("created_at DESC").Find(&expenses)
+	for _, e := range expenses {
+		mutations = append(mutations, MutationEntry{
+			ID:        e.ID,
+			Type:      "OUT",
+			Amount:    e.Amount,
+			Notes:     e.Notes,
+			Category:  e.Category,
+			CreatedAt: e.CreatedAt,
+		})
+	}
+
+	// Sort gabungan by created_at DESC
+	sort.Slice(mutations, func(i, j int) bool {
+		return mutations[i].CreatedAt.After(mutations[j].CreatedAt)
+	})
+
+	// Hitung statistik
+	var totalIn, totalOut float64
+	for _, m := range mutations {
+		if m.Type == "IN" {
+			totalIn += m.Amount
+		} else {
+			totalOut += m.Amount
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"total_earnings": totalEarnings,
-		"total_success":  countSuccess,
-		"total_pending":  countPending,
-		"total_failed":   countFailed,
+		"data":           mutations,
+		"total_earnings": totalIn,
+		"total_used":     totalOut,
+		"balance":        totalIn - totalOut,
 	})
 }
 
 type ExpenseInput struct {
-	Amount float64 `json:"amount" binding:"required,gt=0"`
-	Notes  string  `json:"notes" binding:"required"`
+	Amount          float64 `json:"amount" binding:"required,gt=0"`
+	Notes           string  `json:"notes" binding:"required"`
+	ExpenseCategory string  `json:"category"`
 }
 
 // CreateExpenseHandler mencatat pengeluaran uang kas/donasi
 func CreateExpenseHandler(c *gin.Context) {
 	var input ExpenseInput
-
-	// 1. Validasi input JSON dari frontend
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Input tidak valid: " + err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
 		return
 	}
 
-	// 2. TODO: Simpan data pengeluaran ke database kamu
-	// Contoh logika kasar (sesuaikan dengan setup ORM/DB Gorm kamu):
-	// expense := models.Expense{
-	//     Amount:    input.Amount,
-	//     Notes:     input.Notes,
-	//     CreatedAt: time.Now(),
-	// }
-	// if err := db.Create(&expense).Error; err != nil {
-	//     c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menyimpan data"})
-	//     return
-	// }
+	// Ambil kategori dari body (opsional, default "other")
+	category := input.ExpenseCategory
+	if category == "" {
+		category = "other"
+	}
 
-	// 3. Kembalikan response sukses berformat JSON standar
+	// Simpan ke DB
+	expense := models.Expense{
+		Amount:   input.Amount,
+		Notes:    input.Notes,
+		Category: input.ExpenseCategory, // lihat struct update di bawah
+	}
+	if err := config.DB.Create(&expense).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Gagal menyimpan pengeluaran"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Pengeluaran berhasil dicatat",
-		"data": gin.H{
-			"amount":     input.Amount,
-			"notes":      input.Notes,
-			"created_at": time.Now().Format(time.RFC3339),
-		},
+		"data":    expense,
 	})
 }

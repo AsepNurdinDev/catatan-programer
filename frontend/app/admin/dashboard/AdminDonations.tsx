@@ -273,3 +273,4 @@ export default function AdminDonations({ mutations, onAddExpense }: AdminDonatio
     </div>
   );
 }
+
