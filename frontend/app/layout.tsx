@@ -37,11 +37,15 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-full flex flex-col"
       >
-        <Script 
-          src="https://app.sandbox.midtrans.com/snap/snap.js" // Ubah ke URL production jika sudah live
-          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY} // Panggil dari env (.env.local)
+      <Script 
+        src={
+          process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+          ? "https://app.midtrans.com/snap/snap.js"        // production
+          : "https://app.sandbox.midtrans.com/snap/snap.js" // sandbox
+        }
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
           strategy="lazyOnload"
-        />
+      />
 
         {children}
 

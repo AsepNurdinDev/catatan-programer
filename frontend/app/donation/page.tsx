@@ -6,8 +6,7 @@ import {
   Coins, Receipt, Info, Target, Users, Gift, Tag 
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
-import { getDonations } from "@/src/services/api"; // Memakai service yang sama dengan admin
-
+import { getPublicLedger } from "@/src/services/api";
 interface DonationMutation {
   id: number;
   type: "IN" | "OUT";
@@ -40,7 +39,7 @@ export default function DonationPage() {
     setMounted(true);
     const fetchPublicLedger = async () => {
       try {
-        const response = await getDonations();
+        const response = await getPublicLedger();
         // Menyesuaikan format data pembungkus dari backend
         if (response && Array.isArray(response.data)) {
           setMutations(response.data);

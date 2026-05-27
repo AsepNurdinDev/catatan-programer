@@ -35,6 +35,7 @@ func SetupRoutes(router *gin.Engine) {
 		publicAPI.POST("/donations", controllers.InitiateDonation)
 		publicAPI.POST("/donations/webhook", controllers.HandleMidtransWebhook)
 		publicAPI.GET("/donations/stats", controllers.GetDonationStats)
+		publicAPI.GET("/donations/ledger", controllers.GetPublicLedger)
 	}
 
 	// admin group

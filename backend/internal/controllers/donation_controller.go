@@ -242,6 +242,62 @@ type ExpenseInput struct {
 	ExpenseCategory string  `json:"category"`
 }
 
+// GET /api/donations/ledger (Publik, tanpa auth)
+func GetPublicLedger(c *gin.Context) {
+    var mutations []MutationEntry
+
+    var donations []models.Donation
+    config.DB.Preload("Project").Where("status = ?", "SUCCESS").Order("created_at DESC").Find(&donations)
+    for _, d := range donations {
+        projectTitle := ""
+        if d.Project != nil {
+            projectTitle = d.Project.Title
+        }
+        mutations = append(mutations, MutationEntry{
+            ID:           d.ID,
+            Type:         "IN",
+            Amount:       float64(d.Amount),
+            DonorName:    d.DonorName,
+            ProjectTitle: projectTitle,
+            Notes:        "Donasi via QRIS Midtrans",
+            CreatedAt:    d.CreatedAt,
+        })
+    }
+
+    var expenses []models.Expense
+    config.DB.Order("created_at DESC").Find(&expenses)
+    for _, e := range expenses {
+        mutations = append(mutations, MutationEntry{
+            ID:        e.ID,
+            Type:      "OUT",
+            Amount:    e.Amount,
+            Notes:     e.Notes,
+            Category:  e.Category,
+            CreatedAt: e.CreatedAt,
+        })
+    }
+
+    sort.Slice(mutations, func(i, j int) bool {
+        return mutations[i].CreatedAt.After(mutations[j].CreatedAt)
+    })
+
+    var totalIn, totalOut float64
+    for _, m := range mutations {
+        if m.Type == "IN" {
+            totalIn += m.Amount
+        } else {
+            totalOut += m.Amount
+        }
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "data":           mutations,
+        "total_earnings": totalIn,
+        "total_used":     totalOut,
+        "balance":        totalIn - totalOut,
+    })
+}
+
 // CreateExpenseHandler mencatat pengeluaran uang kas/donasi
 func CreateExpenseHandler(c *gin.Context) {
 	var input ExpenseInput

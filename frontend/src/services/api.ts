@@ -300,3 +300,14 @@ export async function createExpense(amount: number, notes: string, category: str
 
   return res.json();
 }
+
+export async function getPublicLedger() {
+  const baseUrl = getBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/donations/ledger`);
+    if (!res.ok) return { data: [], total_earnings: 0, total_used: 0, balance: 0 };
+    return res.json();
+  } catch {
+    return { data: [], total_earnings: 0, total_used: 0, balance: 0 };
+  }
+}
