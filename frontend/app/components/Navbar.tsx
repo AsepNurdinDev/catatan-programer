@@ -23,7 +23,7 @@ export default function Navbar() {
         {/* LOGO — Lebih Clean & Modern */}
         <div className="text-center sm:text-left group">
           <Link href="/" className="block">
-            <h1 className="text-lg font-bold tracking-tight text-zinc-900 transition-colors group-hover:text-zinc-600">
+            <h1 className="text-xl font-serif font-medium tracking-tight text-zinc-900">
               Catatan Programmer
             </h1>
             <p className="text-[10px] font-medium tracking-wider text-zinc-400 uppercase mt-0.5">
