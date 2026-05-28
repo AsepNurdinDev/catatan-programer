@@ -1,5 +1,6 @@
 import { getPostById } from "@/src/services/api"
 import Link from "next/link"
+import { notFound } from "next/navigation"
 
 import {
   formatDate,
