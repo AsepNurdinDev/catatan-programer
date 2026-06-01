@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"backend-api/internal/helpers"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +33,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		token, err := jwt.Parse(
 			tokenString,
 			func(token *jwt.Token) (interface{}, error) {
-				return helpers.SECRET_KEY, nil
+				return []byte(os.Getenv("JWT_SECRET")), nil
 			},
 		)
 

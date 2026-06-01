@@ -18,7 +18,10 @@ type LoginInput struct {
 func Login(c *gin.Context) {
 	var input LoginInput
 
-	c.ShouldBindJSON(&input)
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	var user models.User
 
