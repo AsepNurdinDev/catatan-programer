@@ -91,7 +91,7 @@ catatan-programmer/
 │   ├── .env.local            # Environment variables (not committed)
 │   └── Dockerfile
 │
-└── docker-compose.yml
+└── docker-compose.yml      
 ```
 
 ---

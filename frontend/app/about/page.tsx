@@ -10,7 +10,7 @@ import Navbar from "@/app/components/Navbar";
 
 // 1. DATA KONDISI RIIL (Bukan Angka Fiktif)
 const coreHighlights = [
-  { label: "Status Akademik", value: "Mahasiswa SI", detail: "Undiksha Singaraja", icon: GraduationCap },
+  { label: "Status Akademik", value: "Mahasiswa Ilmu Komputer", detail: "Undiksha Singaraja", icon: GraduationCap },
   { label: "Fokus Arsitektur", value: "Backend & Dev", detail: "Golang & Container", icon: Server },
   { label: "Proyek Dikembangkan", value: "2+ Platform", detail: "Tenangin & Manajemen Kos", icon: Code2 },
   { label: "Home Base", value: "Singaraja", detail: "Bali, Indonesia", icon: MapPin },
